@@ -4,7 +4,7 @@
 #ifndef PAL_LINUX_DEFS_H
 #define PAL_LINUX_DEFS_H
 
-#define USER_ADDRESS_RESERVED   0x100000000
+#define USER_ADDRESS_HIGHEST    0x100000000
 #define USER_ADDRESS_LOWEST     0x10000
 
 /* internal wrap native pipe inside pipe streams */

@@ -28,6 +28,10 @@ ifeq ($(PROFILING),1)
 CFLAGS	+= -DPROFILING=1
 endif
 
+ifeq ($(VALGRIND),1)
+CFLAGS	+= -DUSE_VALGRIND=1
+endif
+
 files_to_build = $(pal_lib) $(pal_lib_post) $(pal_static) \
 		 $(pal_loader) $(pal_sec)
 

@@ -152,10 +152,26 @@ unsigned long _DkGetAllocationAlignment (void)
 
 void _DkGetAvailableUserAddressRange (PAL_PTR * start, PAL_PTR * end)
 {
-    void * end_addr = (void *) ALLOC_ALIGNDOWN(TEXT_START);
+    void * end_addr   = (void *) USER_ADDRESS_HIGHEST;
     void * start_addr = (void *) USER_ADDRESS_LOWEST;
 
-    assert(ALLOC_ALIGNED(start_addr) && ALLOC_ALIGNED(end_addr));
+    while (1) {
+        if (start_addr >= end_addr)
+            init_fail(PAL_ERROR_NOMEM, "no user memory available");
+
+        void * mem = (void *) ARCH_MMAP(end_addr,
+                                        pal_state.alloc_align,
+                                        PROT_NONE,
+                                        MAP_FIXED|MAP_ANONYMOUS|MAP_PRIVATE,
+                                        -1, 0);
+        if (!IS_ERR_P(mem)) {
+            INLINE_SYSCALL(munmap, 2, mem, pal_state.alloc_align);
+            if (mem == end_addr)
+                break;
+        }
+
+        end_addr = (void *) ((unsigned long) end_addr >> 1);
+    }
 
     while (1) {
         if (start_addr >= end_addr)
@@ -175,7 +191,7 @@ void _DkGetAvailableUserAddressRange (PAL_PTR * start, PAL_PTR * end)
         start_addr = (void *) ((unsigned long) start_addr << 1);
     }
 
-    *end   = (PAL_PTR) end_addr - USER_ADDRESS_RESERVED;
+    *end   = (PAL_PTR) end_addr;
     *start = (PAL_PTR) start_addr;
 }
 
@@ -224,6 +240,8 @@ void pal_linux_main (void * args)
                          pal_map.l_info, pal_map.l_addr);
 
     ELF_DYNAMIC_RELOCATE(&pal_map);
+
+    printf("PAL loaded at %p\n", pal_map.l_addr);
 
     linux_state.environ = envp;
 

@@ -51,6 +51,10 @@ typedef __kernel_pid_t pid_t;
 # define SEEK_SET 0
 #endif
 
+#ifdef USE_VALGRIND
+#include <valgrind/memcheck.h>
+#endif
+
 static inline int create_process_handle (PAL_HANDLE * parent,
                                          PAL_HANDLE * child)
 {

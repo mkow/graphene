@@ -38,6 +38,10 @@ if [ "$PERF" == "1" ]; then
 	GDB_CMD="perf stat"
 fi
 
+if [ "$VALGRIND" == "1" ]; then
+	GDB_CMD="valgrind --log-file=valgrind.log --trace-children=yes"
+fi
+
 if [ "$SEC" == "1" ]; then
 	echo "Use reference monitor"
 	PAL_CMD=$RUNTIME_DIR/pal_sec-$PAL_HOST

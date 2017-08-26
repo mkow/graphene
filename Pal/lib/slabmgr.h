@@ -29,6 +29,10 @@
 #include "linux_list.h"
 #include <sys/mman.h>
 
+#ifdef USE_VALGRIND
+#include <valgrind/memcheck.h>
+#endif
+
 #ifndef system_malloc
 #error "macro \"void * system_malloc(int size)\" not declared"
 #endif
@@ -181,6 +185,9 @@ static inline void __set_free_slab_area (SLAB_AREA area, SLAB_MGR mgr,
     mgr->addr[level] = (void *) area->raw;
     mgr->addr_top[level] = (void *) area->raw + area->size * slab_size;
     mgr->size[level] += area->size;
+#ifdef USE_VALGRIND
+    VALGRIND_MAKE_MEM_NOACCESS((void *) area->raw, area->size * slab_size);
+#endif
 }
 
 static inline SLAB_MGR create_slab_mgr (void)
@@ -200,6 +207,9 @@ static inline SLAB_MGR create_slab_mgr (void)
         return NULL;
 
     mgr = (SLAB_MGR) mem;
+#ifdef USE_VALGRIND
+    VALGRIND_CREATE_MEMPOOL(mgr, 0, 1);
+#endif
 
     void * addr = (void *) mgr + sizeof(SLAB_MGR_TYPE);
     int i;
@@ -238,6 +248,9 @@ static inline void destroy_slab_mgr (SLAB_MGR mgr)
         addr += __MAX_MEM_SIZE(slab_levels[i], STARTUP_SIZE);
     }
 
+#ifdef USE_VALGRIND
+    VALGRIND_DESTROY_MEMPOOL(mgr);
+#endif
     system_free(mgr, addr - (void *) mgr);
 }
 
@@ -287,6 +300,9 @@ static inline void * slab_alloc (SLAB_MGR mgr, int size)
 
         mem->size = size;
         OBJ_LEVEL(mem) = (unsigned char) -1;
+#ifdef USE_VALGRIND
+        VALGRIND_MEMPOOL_ALLOC(mgr, OBJ_RAW(mem), size);
+#endif
 
         return OBJ_RAW(mem);
     }
@@ -313,6 +329,10 @@ static inline void * slab_alloc (SLAB_MGR mgr, int size)
     unsigned long * m =
             (unsigned long *) ((void *) OBJ_RAW(mobj) + slab_levels[level]);
     *m = SLAB_CANARY_STRING;
+#endif
+
+#ifdef USE_VALGRIND
+    VALGRIND_MEMPOOL_ALLOC(mgr, OBJ_RAW(mobj), slab_levels[level]);
 #endif
 
     return OBJ_RAW(mobj);
@@ -350,12 +370,19 @@ static inline void slab_free (SLAB_MGR mgr, void * obj)
 
     if (level == (unsigned char) -1) {
         LARGE_MEM_OBJ mem = RAW_TO_OBJ(obj, LARGE_MEM_OBJ_TYPE);
+#ifdef USE_VALGRIND
+        VALGRIND_MEMPOOL_FREE(mgr, obj);
+#endif
         system_free(mem, mem->size + sizeof(LARGE_MEM_OBJ_TYPE));
         return;
     }
 
     if (level >= SLAB_LEVEL)
         return;
+
+#ifdef USE_VALGRIND
+    VALGRIND_MEMPOOL_FREE(mgr, obj);
+#endif
 
 #ifdef SLAB_CANARY
     unsigned long * m = (unsigned long *) (obj + slab_levels[level]);

@@ -62,6 +62,10 @@ ifeq ($(PROFILING), 1)
 CFLAGS += -DPROFILE
 endif
 
+ifeq ($(VALGRIND), 1)
+CFLAGS += -DUSE_VALGRIND=1
+endif
+
 $(files_to_install): $(RUNTIME_DIR)/%: %
 	cp -f $< $@
 

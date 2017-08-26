@@ -127,6 +127,9 @@ int init_vma (void)
         heap_bottom < PAL_CB(executable_range.end))
         heap_bottom = (void *) ALIGN_UP(PAL_CB(executable_range.end));
 
+    debug("set the inital heap region as %p-%p\n", heap_bottom,
+          PAL_CB(user_address.end));
+
     __set_heap_top(heap_bottom, (void *) PAL_CB(user_address.end));
 
     bkeep_shim_heap();

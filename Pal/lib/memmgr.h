@@ -29,6 +29,10 @@
 #include "linux_list.h"
 #include <sys/mman.h>
 
+#ifdef USE_VALGRIND
+#include <valgrind/memcheck.h>
+#endif
+
 #ifndef OBJ_TYPE
 #error "OBJ_TYPE not defined"
 #endif
@@ -107,6 +111,9 @@ static inline void __set_free_mem_area (MEM_AREA area, MEM_MGR mgr, int size)
 {
     mgr->obj = area->objs;
     mgr->obj_top = area->objs + area->size;
+#ifdef USE_VALGRIND
+    VALGRIND_MAKE_MEM_NOACCESS(area->objs, area->size);
+#endif
 }
 
 static inline MEM_MGR create_mem_mgr (unsigned int size)
@@ -119,6 +126,9 @@ static inline MEM_MGR create_mem_mgr (unsigned int size)
         return NULL;
 
     mgr = (MEM_MGR) mem;
+#ifdef USE_VALGRIND
+    VALGRIND_CREATE_MEMPOOL(mgr, 0, 1);
+#endif
     area = (MEM_AREA) (mem + sizeof(MEM_MGR_TYPE));
     area->size = size;
 
@@ -164,6 +174,9 @@ static inline void destroy_mem_mgr (MEM_MGR mgr)
         system_free(tmp, sizeof(MEM_AREA_TYPE) + __SUM_OBJ_SIZE(tmp->size));
     }
 
+#ifdef USE_VALGRIND
+    VALGRIND_DESTROY_MEMPOOL(mgr);
+#endif
     system_free(mgr, __MAX_MEM_SIZE(first->size));
 }
 
@@ -185,6 +198,11 @@ static inline OBJ_TYPE * get_mem_obj_from_mgr (MEM_MGR mgr)
         mobj = mgr->obj++;
     }
     system_unlock();
+
+#ifdef USE_VALGRIND
+    VALGRIND_MEMPOOL_ALLOC(mgr, &mobj->obj, sizeof(MEM_OBJ_TYPE));
+#endif
+
     return &mobj->obj;
 }
 
@@ -221,12 +239,21 @@ static inline OBJ_TYPE * get_mem_obj_from_mgr_enlarge (MEM_MGR mgr,
         mobj = mgr->obj++;
     }
     system_unlock();
+
+#ifdef USE_VALGRIND
+    VALGRIND_MEMPOOL_ALLOC(mgr, &mobj->obj, sizeof(MEM_OBJ_TYPE));
+#endif
+
     return &mobj->obj;
 }
 
 static inline void free_mem_obj_to_mgr (MEM_MGR mgr, OBJ_TYPE * obj)
 {
     MEM_OBJ mobj = container_of(obj, MEM_OBJ_TYPE, obj);
+
+#ifdef USE_VALGRIND
+    VALGRIND_MEMPOOL_FREE(mgr, obj);
+#endif
 
     system_lock();
     MEM_AREA area, found = NULL;

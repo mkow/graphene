@@ -9,6 +9,10 @@ ifeq ($(PROFILING),1)
 CFLAGS	+= -DPROFILING=1
 endif
 
+ifeq ($(VALGRIND),1)
+CFLAGS	+= -DUSE_VALGRIND=1
+endif
+
 host_files = libpal-Linux.a
 
 defs	= -DIN_PAL -DPAL_DIR=$(PAL_DIR) -DRUNTIME_DIR=$(RUNTIME_DIR)
