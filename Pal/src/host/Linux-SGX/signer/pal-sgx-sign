@@ -324,9 +324,11 @@ def get_trusted_files(manifest, args):
             for (key, val) in targets.items():
                 (uri, target) = val
                 if target == found:
-                    found = None
+                    dep = found = None
                     break
 
+            if dep is None:
+                continue
             if found is not None:
                 dep = found
 
