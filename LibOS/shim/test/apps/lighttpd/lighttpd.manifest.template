@@ -2,12 +2,17 @@
 
 loader.preload = file:$(SHIMPATH)
 loader.exec = file:build/sbin/lighttpd
-loader.env.LD_LIBRARY_PATH = /lib:/lighttpd
+loader.env.LD_LIBRARY_PATH = /lib:/lib/x86_64-linux-gnu:/lighttpd
 loader.debug_type = none
 
 fs.mount.lib.type = chroot
 fs.mount.lib.path = /lib
 fs.mount.lib.uri = file:$(LIBCDIR)
+
+fs.mount.lib64.type = chroot
+fs.mount.lib64.path = /lib/x86_64-linux-gnu
+fs.mount.lib64.uri = file:/lib/x86_64-linux-gnu
+
 
 fs.mount.build.type = chroot
 fs.mount.build.path = /lighttpd
@@ -35,6 +40,7 @@ glibc.heap_size = 16M
 sgx.thread_num = 32
 
 sgx.search_trusted_libs.libc = file:$(LIBCDIR)
+sgx.search_trusted_libs.linux_gnu = file:/lib/x86_64-linux-gnu
 
 sgx.trusted_libs.mod1 = file:build/lib/mod_indexfile.so
 sgx.trusted_libs.mod2 = file:build/lib/mod_dirlisting.so
@@ -44,5 +50,8 @@ sgx.trusted_files.conf1 = file:lighttpd.conf
 sgx.trusted_files.conf2 = file:lighttpd-generic.conf
 sgx.trusted_files.conf3 = file:lighttpd-server.conf
 sgx.trusted_files.conf4 = file:lighttpd-multithreaded.conf
+sgx.trusted_files.conf5 = file:lighttpd-ssl.conf
+
+sgx.trusted_files.server_key = file:server.pem
 
 sgx.allowed_files.html = file:html

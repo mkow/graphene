@@ -108,6 +108,11 @@ int _DkVirtualMemoryFree (void * addr, uint64_t size)
     if (sgx_is_within_enclave(addr, size)) {
         free_pages(addr, size);
     } else {
+<<<<<<< HEAD
+=======
+        /* Possible to have untrusted mapping. Simply unmap
+           the memory outside the enclave */
+>>>>>>> fix-mem-leak
         ocall_unmap_untrusted(addr, size);
     }
     return 0;

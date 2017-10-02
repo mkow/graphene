@@ -69,7 +69,7 @@ else # USE_UBUNTU_SRC = no
 
 ifeq ($(VERSION),7)
 
-ICEDTEA_URL = http://icedtea.wildebeest.org/download/drops/icedtea7/2.7.0/
+ICEDTEA_URL = http://icedtea.wildebeest.org/download/drops/icedtea7/2.6.4/
 JAVA_DIR = openjdk-7
 JAVA_SRC = $(JAVA_DIR) $(JAVA_DIR)/hotspot $(JAVA_DIR)/jdk $(JAVA_DIR)/jdk/src/share/lib/security/nss.cfg
 JAVA_HOME = openjdk-7-jre
