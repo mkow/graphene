@@ -1,0 +1,15 @@
+#!/bin/bash
+
+JAVA_FLAGS="-Xmx16m -XX:ReservedCodeCacheSize=4m"
+
+if [ "$1" = "-native" ]
+then
+	shift
+	JAVA=/usr/bin/java
+else
+	JAVA=$(/usr/bin/dirname $(readlink -f ${BASH_SOURCE[0]}))/java.manifest
+fi
+
+set -x
+
+exec $JAVA -cp classes $JAVA_FLAGS $*
