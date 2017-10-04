@@ -45,7 +45,6 @@ $(JAVA_DIR)/hotspot: hotspot.tar.bz2 | $(JAVA_DIR)
 $(JAVA_DIR)/jdk: jdk.tar.bz2 | $(JAVA_DIR)
 	tar -xjf $<
 	rm -rf $@
-	cd $(shell tar -tjf $< | sed -e 's@/.*@@' | head -n 1) && patch -p1 < ../JDK-8015880.patch
 	mv $(shell tar -tjf $< | sed -e 's@/.*@@' | head -n 1) $@
 
 openjdk.tar.bz2 hotspot.tar.bz2 jdk.tar.bz2:
