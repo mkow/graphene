@@ -24,6 +24,7 @@
 #include "pal_linux_defs.h"
 #include "pal.h"
 #include "api.h"
+#include "pal_crypto.h"
 
 #include "linux_types.h"
 #include "sgx_arch.h"
@@ -118,18 +119,58 @@ void session_key_to_mac_key (PAL_SESSION_KEY * session_key,
         m[i] = s[i] ^ s[16 + i];
 }
 
+typedef int (*handle_read_t)  (PAL_HANDLE, int, int, void *);
+typedef int (*handle_write_t) (PAL_HANDLE, int, int, const void *);
+typedef int (*check_mrenclave_t) (sgx_arch_hash_t *, void *, void *);
+
 /* exchange and establish a 256-bit session key */
-int _DkStreamKeyExchange (PAL_HANDLE stream, PAL_SESSION_KEY * key);
+int _DkStreamKeyExchange (PAL_HANDLE stream, PAL_SESSION_KEY * key,
+                          handle_read_t read, handle_write_t write);
 
 /* request and respond for remote attestation */
 int _DkStreamAttestationRequest (PAL_HANDLE stream, void * data,
-                                 int (*check_mrenclave) (sgx_arch_hash_t *,
-                                                         void *, void *),
+                                 handle_read_t read, handle_write_t write,
+                                 check_mrenclave_t check_mrenclave,
                                  void * check_param);
 int _DkStreamAttestationRespond (PAL_HANDLE stream, void * data,
-                                 int (*check_mrenclave) (sgx_arch_hash_t *,
-                                                         void *, void *),
+                                 handle_read_t read, handle_write_t write,
+                                 check_mrenclave_t check_mrenclave,
                                  void * check_param);
+typedef struct {
+    PAL_SESSION_KEY key;
+
+    /* the following mimic a simplified SSL header */
+    struct pal_stream_context {
+        LIB_GCM_CONTEXT ctx;
+
+        /* the header part / also the additional part in GCM */
+        struct {
+            uint64_t epoch;
+            /* skip the type and versions */
+            uint16_t msg_len;
+        } __attribute__((packed)) hdr;
+
+        struct {
+            uint32_t salt; /* fixed part */
+            uint64_t nonce; /* nonce + ctr = first 12 bytes of each record */
+            /* uint32_t ctr; */
+        } __attribute__((packed)) iv;
+    } __attribute__((packed))
+    ctxi, ctxo;
+
+} PAL_SEC_CONTEXT;
+
+int _DkStreamSecureInit (PAL_HANDLE stream, bool server, PAL_SESSION_KEY * key,
+                         PAL_SEC_CONTEXT ** context);
+
+int _DkStreamSecureFree (PAL_SEC_CONTEXT * context);
+
+int _DkStreamSecureRead  (PAL_HANDLE handle,
+                          PAL_SEC_CONTEXT * sec_ctx, handle_read_t read,
+                          int offset, int count, void * buffer);
+int _DkStreamSecureWrite (PAL_HANDLE handle,
+                          PAL_SEC_CONTEXT * sec_ctx, handle_write_t write,
+                          int offset, int count, const void * buffer);
 
 /* enclave state used for generating report */
 #define PAL_ATTESTATION_DATA_SIZE   24
@@ -158,7 +199,7 @@ static inline __attribute__((always_inline))
 char * __hex2str(void * hex, int size)
 {
     static char * ch = "0123456789abcdef";
-    char * str = __alloca(size * 2);
+    char * str = __alloca(size * 2 + 1);
 
     for (int i = 0 ; i < size ; i++) {
         unsigned char h = ((unsigned char *) hex)[i];
@@ -166,7 +207,7 @@ char * __hex2str(void * hex, int size)
         str[i * 2 + 1] = ch[h % 16];
     }
 
-    str[size * 2 - 1] = 0;
+    str[size * 2] = 0;
     return str;
 }
 

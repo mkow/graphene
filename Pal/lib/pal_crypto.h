@@ -1,3 +1,6 @@
+/* -*- mode:c; c-file-style:"k&r"; c-basic-offset: 4; tab-width:4; indent-tabs-mode:nil; mode:auto-fill; fill-column:78; -*- */
+/* vim: set ts=4 sw=4 et tw=78 fo=cqt wm=0: */
+
 /* Copyright (C) 2014 OSCAR lab, Stony Brook University
    Copyright (C) 2017 Fortanix, Inc.
 
@@ -68,6 +71,11 @@ typedef mbedtls_sha256_context LIB_SHA256_CONTEXT;
 #include "crypto/mbedtls/mbedtls/dhm.h"
 typedef mbedtls_dhm_context LIB_DH_CONTEXT;
 typedef mbedtls_rsa_context LIB_RSA_KEY;
+
+#define GCM_TAG_SIZE 16
+
+#include "crypto/mbedtls/mbedtls/gcm.h"
+typedef mbedtls_gcm_context LIB_GCM_CONTEXT;
 #endif /* CRYPTO_USE_MBEDTLS */
 
 #ifndef CRYPTO_PROVIDER_SPECIFIED
@@ -117,5 +125,26 @@ int lib_RSAVerifySHA256(LIB_RSA_KEY *key, const uint8_t *signature,
 
 // Frees memory allocated in lib_RSAInitKey.
 int lib_RSAFreeKey(LIB_RSA_KEY *key);
+
+/* AES-GCM */
+
+int lib_AESGCMInit(LIB_GCM_CONTEXT *context,
+                   const uint8_t *key, uint64_t key_len);
+
+int lib_AESGCMAuthEncrypt(LIB_GCM_CONTEXT *context,
+                          const uint8_t *iv, uint64_t iv_len,
+                          const uint8_t *ad, uint64_t ad_len,
+                          const uint8_t *input, uint64_t input_len,
+                          uint8_t *output, uint64_t *output_len,
+                          uint8_t *tag, uint64_t tag_len);
+
+int lib_AESGCMAuthDecrypt(LIB_GCM_CONTEXT *context,
+                          const uint8_t *iv, uint64_t iv_len,
+                          const uint8_t *ad, uint64_t ad_len,
+                          const uint8_t *input, uint64_t input_len,
+                          uint8_t *output, uint64_t *output_len,
+                          uint8_t *tag, uint64_t tag_len);
+
+int lib_AESGCMFree(LIB_GCM_CONTEXT *context);
 
 #endif

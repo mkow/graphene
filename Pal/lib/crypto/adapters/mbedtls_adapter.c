@@ -1,3 +1,6 @@
+/* -*- mode:c; c-file-style:"k&r"; c-basic-offset: 4; tab-width:4; indent-tabs-mode:nil; mode:auto-fill; fill-column:78; -*- */
+/* vim: set ts=4 sw=4 et tw=78 fo=cqt wm=0: */
+
 /* Copyright (C) 2017 Fortanix, Inc.
 
    This file is part of Graphene Library OS.
@@ -21,10 +24,12 @@
 #include "pal_crypto.h"
 #include "pal_error.h"
 #include "pal_debug.h"
+#include "api.h"
 #include "assert.h"
 #include "crypto/mbedtls/mbedtls/cmac.h"
 #include "crypto/mbedtls/mbedtls/sha256.h"
 #include "crypto/mbedtls/mbedtls/rsa.h"
+#include "crypto/mbedtls/mbedtls/gcm.h"
 
 #define BITS_PER_BYTE 8
 
@@ -192,5 +197,93 @@ int lib_RSAVerifySHA256(LIB_RSA_KEY *key, const uint8_t *signature,
 int lib_RSAFreeKey(LIB_RSA_KEY *key)
 {
     mbedtls_rsa_free(key);
+    return 0;
+}
+
+int lib_AESGCMInit(LIB_GCM_CONTEXT * context,
+                   const uint8_t *key, uint64_t key_len)
+{
+    mbedtls_cipher_type_t type;
+    int ret;
+
+    switch (key_len) {
+    case 16:
+        type = MBEDTLS_CIPHER_AES_128_ECB;
+        break;
+    case 24:
+        type = MBEDTLS_CIPHER_AES_192_ECB;
+        break;
+    case 32:
+        type = MBEDTLS_CIPHER_AES_256_ECB;
+        break;
+    default:
+        return -PAL_ERROR_INVAL;
+    }
+
+    const mbedtls_cipher_info_t *cipher_info =
+        mbedtls_cipher_info_from_type(type);
+
+    if ((ret = mbedtls_cipher_setup(&context->cipher_ctx, cipher_info)) != 0)
+        goto exit;
+
+    if ((ret = mbedtls_cipher_setkey(&context->cipher_ctx, key, key_len * 8,
+                                     MBEDTLS_ENCRYPT)) != 0)
+        goto exit;
+
+    if ((ret = mbedtls_gcm_gen_table(context)) != 0)
+        goto exit;
+
+    return 0;
+
+exit:
+    return -PAL_ERROR_INVAL;
+}
+
+int lib_AESGCMAuthEncrypt(LIB_GCM_CONTEXT *context,
+                          const uint8_t *iv, uint64_t iv_len,
+                          const uint8_t *ad, uint64_t ad_len,
+                          const uint8_t *input, uint64_t input_len,
+                          uint8_t *output, uint64_t *output_len,
+                          uint8_t *tag, uint64_t tag_len)
+{
+    int ret = mbedtls_gcm_crypt_and_tag(context, MBEDTLS_GCM_ENCRYPT, input_len,
+                                        iv, iv_len, ad, ad_len,
+                                        input, output, tag_len, tag);
+
+    if (ret == MBEDTLS_ERR_GCM_AUTH_FAILED)
+        return -PAL_ERROR_DENIED;
+
+    if (!ret)
+        *output_len = input_len;
+
+    return ret < 0 ? -PAL_ERROR_INVAL : 0;
+}
+
+int lib_AESGCMAuthDecrypt(LIB_GCM_CONTEXT *context,
+                          const uint8_t *iv, uint64_t iv_len,
+                          const uint8_t *ad, uint64_t ad_len,
+                          const uint8_t *input, uint64_t input_len,
+                          uint8_t *output, uint64_t *output_len,
+                          uint8_t *tag, uint64_t tag_len)
+{
+    int ret = mbedtls_gcm_auth_decrypt(context, input_len, iv, iv_len, ad, ad_len,
+                                       tag, tag_len, input, output);
+
+
+    if (ret < 0)
+        switch(ret) {
+            case MBEDTLS_ERR_GCM_AUTH_FAILED:
+                return -PAL_ERROR_DENIED;
+            default:
+                return -PAL_ERROR_INVAL;
+        }
+
+    *output_len = input_len;
+    return 0;
+}
+
+int lib_AESGCMFree(LIB_GCM_CONTEXT *context)
+{
+    mbedtls_gcm_free(context);
     return 0;
 }

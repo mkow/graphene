@@ -17,7 +17,7 @@ LDFLAGS	= -shared -nostdlib -z combreloc -z defs \
 ARFLAGS	=
 
 CRYPTO_PROVIDER = mbedtls
-CFLAGS += -DCRYPTO_USE_MBEDTLS
+CFLAGS += -DCRYPTO_USE_MBEDTLS -DMBEDTLS_ASSUME_AESNI
 
 pal_loader = $(HOST_DIR)/pal-sgx
 pal_sec =

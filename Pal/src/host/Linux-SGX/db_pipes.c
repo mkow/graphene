@@ -40,6 +40,12 @@ typedef __kernel_pid_t pid_t;
 #include <asm/poll.h>
 #include <linux/un.h>
 
+static int pipe_read (PAL_HANDLE handle, int offset, int len,
+                      void * buffer);
+
+static int pipe_write (PAL_HANDLE handle, int offset, int len,
+                       const void * buffer);
+
 static int pipe_path (int pipeid, char * path, int len)
 {
     /* use abstrace UNIX sockets for pipes */
@@ -105,8 +111,18 @@ static int pipe_waitforclient (PAL_HANDLE handle, PAL_HANDLE * client)
     HANDLE_HDR(clnt)->flags |= RFD(0)|WFD(0)|WRITEABLE(0);
     clnt->pipe.fd = ret;
     clnt->pipe.pipeid = handle->pipe.pipeid;
-    *client = clnt;
 
+    PAL_SESSION_KEY key;
+    ret = _DkStreamKeyExchange(clnt, &key, pipe_read, pipe_write);
+    if (ret < 0)
+        return ret;
+
+    ret = _DkStreamSecureInit(clnt, true, &key,
+                              (PAL_SEC_CONTEXT **) &clnt->pipe.sec_ctx);
+    if (ret < 0)
+        return ret;
+
+    *client = clnt;
     return 0;
 }
 
@@ -132,8 +148,18 @@ static int pipe_connect (PAL_HANDLE * handle, PAL_NUM pipeid, int options)
     hdl->pipe.pipeid = pipeid;
     hdl->pipe.nonblocking = (options & PAL_OPTION_NONBLOCK) ?
                             PAL_TRUE : PAL_FALSE;
-    *handle = hdl;
 
+    PAL_SESSION_KEY key;
+    ret = _DkStreamKeyExchange(hdl, &key, pipe_read, pipe_write);
+    if (ret < 0)
+        return ret;
+
+    ret = _DkStreamSecureInit(hdl, false, &key,
+                              (PAL_SEC_CONTEXT **) &hdl->pipe.sec_ctx);
+    if (ret < 0)
+        return ret;
+
+    *handle = hdl;
     return 0;
 }
 
@@ -208,6 +234,16 @@ static int pipe_read (PAL_HANDLE handle, int offset, int len,
     return bytes;
 }
 
+static int pipe_secure_read (PAL_HANDLE handle, int offset, int count,
+                             void * buffer)
+{
+    PAL_SEC_CONTEXT * ctx = IS_HANDLE_TYPE(handle, pipeprv) ?
+                            handle->pipeprv.sec_ctx : handle->pipe.sec_ctx;
+
+    return _DkStreamSecureRead(handle, ctx,
+                               pipe_read, offset, count, buffer);
+}
+
 /* 'write' operation of pipe stream. offset does not apply here. */
 static int pipe_write (PAL_HANDLE handle, int offset, int len,
                        const void * buffer)
@@ -238,6 +274,16 @@ static int pipe_write (PAL_HANDLE handle, int offset, int len,
     return bytes;
 }
 
+static int pipe_secure_write (PAL_HANDLE handle, int offset, int count,
+                              const void * buffer)
+{
+    PAL_SEC_CONTEXT * ctx = IS_HANDLE_TYPE(handle, pipeprv) ?
+                            handle->pipeprv.sec_ctx : handle->pipe.sec_ctx;
+
+    return _DkStreamSecureWrite(handle, ctx,
+                                pipe_write, offset, count, buffer);
+}
+
 /* 'close' operation of pipe stream. */
 static int pipe_close (PAL_HANDLE handle)
 {
@@ -246,16 +292,28 @@ static int pipe_close (PAL_HANDLE handle)
             ocall_close(handle->pipeprv.fds[0]);
             handle->pipeprv.fds[0] = PAL_IDX_POISON;
         }
+
         if (handle->pipeprv.fds[1] != PAL_IDX_POISON) {
             ocall_close(handle->pipeprv.fds[1]);
             handle->pipeprv.fds[1] = PAL_IDX_POISON;
         }
+
+        if (handle->pipeprv.sec_ctx) {
+            _DkStreamSecureFree((PAL_SEC_CONTEXT *) handle->pipeprv.sec_ctx);
+            handle->pipeprv.sec_ctx = NULL;
+        }
+
         return 0;
     }
 
     if (handle->pipe.fd != PAL_IDX_POISON) {
         ocall_close(handle->pipe.fd);
         handle->pipe.fd = PAL_IDX_POISON;
+    }
+
+    if (handle->pipe.sec_ctx) {
+        _DkStreamSecureFree((PAL_SEC_CONTEXT *) handle->pipe.sec_ctx);
+        handle->pipe.sec_ctx = NULL;
     }
 
     return 0;
@@ -427,8 +485,8 @@ struct handle_ops pipe_ops = {
         .getname            = &pipe_getname,
         .open               = &pipe_open,
         .waitforclient      = &pipe_waitforclient,
-        .read               = &pipe_read,
-        .write              = &pipe_write,
+        .read               = &pipe_secure_read,
+        .write              = &pipe_secure_write,
         .close              = &pipe_close,
         .delete             = &pipe_delete,
         .attrquerybyhdl     = &pipe_attrquerybyhdl,
@@ -437,8 +495,8 @@ struct handle_ops pipe_ops = {
 
 struct handle_ops pipeprv_ops = {
         .open               = &pipe_open,
-        .read               = &pipe_read,
-        .write              = &pipe_write,
+        .read               = &pipe_secure_read,
+        .write              = &pipe_secure_write,
         .close              = &pipe_close,
         .attrquerybyhdl     = &pipe_attrquerybyhdl,
         .attrsetbyhdl       = &pipe_attrsetbyhdl,

@@ -213,11 +213,15 @@ int ocall_read (int fd, void * buf, unsigned int count)
 {
     int retval = 0;
     void * obuf = NULL;
+    bool must_free_obuf = false;
 
-    if (count > 4096) {
+    if (buf && !sgx_is_within_enclave(buf, count)) {
+        obuf = buf;
+    } else if (count > 4096) {
         retval = ocall_alloc_untrusted(ALLOC_ALIGNUP(count), &obuf);
         if (retval < 0)
             return retval;
+        must_free_obuf = true;
     }
 
     ms_ocall_read_t * ms;
@@ -232,11 +236,12 @@ int ocall_read (int fd, void * buf, unsigned int count)
 
     retval = SGX_OCALL(OCALL_READ, ms);
 
-    if (retval > 0)
+    if (retval > 0 && buf != ms->ms_buf)
         memcpy(buf, ms->ms_buf, retval);
+
     OCALL_EXIT();
 
-    if (obuf)
+    if (obuf && must_free_obuf)
         ocall_unmap_untrusted(obuf, ALLOC_ALIGNUP(count));
 
     return retval;
@@ -246,11 +251,15 @@ int ocall_write (int fd, const void * buf, unsigned int count)
 {
     int retval = 0;
     void * obuf = NULL;
+    bool must_free_obuf = false;
 
-    if (count > 4096) {
+    if (buf && !sgx_is_within_enclave(buf, count)) {
+        obuf = (void *) buf;
+    } else if (count > 4096) {
         retval = ocall_alloc_untrusted(ALLOC_ALIGNUP(count), &obuf);
         if (retval < 0)
             return retval;
+        must_free_obuf = true;
     }
 
     ms_ocall_write_t * ms;
@@ -259,7 +268,8 @@ int ocall_write (int fd, const void * buf, unsigned int count)
     ms->ms_fd = fd;
     if (obuf) {
         ms->ms_buf = obuf;
-        memcpy(obuf, buf, count);
+        if (buf != obuf)
+            memcpy(obuf, buf, count);
     } else {
         ms->ms_buf = COPY_TO_USER(buf, count);
     }
@@ -268,7 +278,7 @@ int ocall_write (int fd, const void * buf, unsigned int count)
     retval = SGX_OCALL(OCALL_WRITE, ms);
     OCALL_EXIT();
 
-    if (obuf)
+    if (obuf && must_free_obuf)
         ocall_unmap_untrusted(obuf, ALLOC_ALIGNUP(count));
 
     return retval;
