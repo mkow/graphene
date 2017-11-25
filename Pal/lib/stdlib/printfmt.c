@@ -317,7 +317,7 @@ vsprintf(char * buf, int n, const char * fmt, va_list *ap)
 }
 
 int
-snprintf(char * buf, int n, const char * fmt, ...)
+snprintf(char * buf, size_t n, const char * fmt, ...)
 {
 	va_list ap;
 	int rc;

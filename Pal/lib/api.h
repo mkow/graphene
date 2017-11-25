@@ -88,7 +88,7 @@ void fprintfmt (int (*_fputch)(void *, int, void *), void * f, void * putdat,
 void vfprintfmt (int (*_fputch)(void *, int, void *), void * f, void * putdat,
                  const char * fmt, va_list *ap);
 
-int snprintf (char * buf, int n, const char * fmt, ...);
+int snprintf (char * buf, size_t n, const char * fmt, ...);
 
 /* Miscelleneous */
 
