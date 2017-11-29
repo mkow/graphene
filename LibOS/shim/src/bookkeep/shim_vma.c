@@ -695,7 +695,7 @@ void * get_unmapped_vma (uint64_t length, int flags)
     __check_delayed_bkeep();
 
     if (heap_top - heap_bottom < length) {
-        debug("current heap %p-%p is not enough for allocating %lld bytes\n",
+        debug("current heap %p-%p is not enough for allocating %llu bytes\n",
               heap_bottom, heap_top, length);
         unlock(vma_list_lock);
         put_vma(new);
@@ -771,7 +771,7 @@ void * get_unmapped_vma_for_cp (uint64_t length)
         return NULL;
 
     if (length > PAL_CB(user_address.end) - PAL_CB(user_address.start)) {
-        debug("user space is not enough for allocating %lld bytes\n", length);
+        debug("user space is not enough for allocating %llu bytes\n", length);
         return NULL;
     }
 
@@ -905,11 +905,11 @@ static struct shim_vma * __lookup_supervma (const void * addr, uint64_t length,
             struct shim_vma * tmp2;
             warn("Failure\n");
             listp_for_each_entry(tmp2, &vma_list, list) {
-                warn ("Entry: %llx..%llx (%llx)\n", tmp2->addr, tmp2->addr + tmp2->length, tmp2->length);
+                warn ("Entry: %p..%p (%llx)\n", tmp2->addr, tmp2->addr + tmp2->length, tmp2->length);
             }
-            warn("Prev is %p, tmp->addr = %llx, len is %llx\n", prev, tmp->addr, tmp->length);
+            warn("Prev is %p, tmp->addr = %p, len is %llx\n", prev, tmp->addr, tmp->length);
             if (prev)
-                warn("prev addr is %llx, len is %llx\n", prev->addr, prev->length);
+                warn("prev addr is %p, len is %llx\n", prev->addr, prev->length);
         }
         assert(!prev || prev->addr + prev->length <= tmp->addr);
         /* Insert in order; break once we are past the appropriate point  */
@@ -1260,7 +1260,7 @@ BEGIN_RS_FUNC(vma)
 
     unlock(vma_list_lock);
 
-    debug("vma: %p-%p flags %x prot %p\n", vma->addr, vma->addr + vma->length,
+    debug("vma: %p-%p flags %x prot %d\n", vma->addr, vma->addr + vma->length,
           vma->flags, vma->prot);
 
     if (!(vma->flags & VMA_UNMAPPED)) {
@@ -1314,12 +1314,12 @@ BEGIN_RS_FUNC(vma)
         get_handle(vma->file);
 
     if (vma->file)
-        DEBUG_RS("%p-%p,size=%d,prot=%08x,flags=%08x,off=%d,path=%s,uri=%s",
+        DEBUG_RS("%p-%p,size=%llu,prot=%08x,flags=%08x,off=%llu,path=%s,uri=%s",
                  vma->addr, vma->addr + vma->length, vma->length,
                  vma->prot, vma->flags, vma->offset,
                  qstrgetstr(&vma->file->path), qstrgetstr(&vma->file->uri));
     else
-        DEBUG_RS("%p-%p,size=%d,prot=%08x,flags=%08x,off=%d",
+        DEBUG_RS("%p-%p,size=%llu,prot=%08x,flags=%08x,off=%llu",
                  vma->addr, vma->addr + vma->length, vma->length,
                  vma->prot, vma->flags, vma->offset);
 }
@@ -1378,7 +1378,7 @@ void debug_print_vma_list (void)
             }
         }
 
-        sys_printf("[%p-%p] prot=%08x flags=%08x%s%s offset=%d%s%s%s%s\n",
+        sys_printf("[%p-%p] prot=%08x flags=%08x%s%s offset=%llu%s%s%s%s\n",
                    vma->addr, vma->addr + vma->length,
                    vma->prot,
                    vma->flags & ~(VMA_INTERNAL|VMA_UNMAPPED|VMA_TAINTED),

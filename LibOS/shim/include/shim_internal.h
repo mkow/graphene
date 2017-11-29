@@ -57,23 +57,28 @@ struct debug_buf {
     char buf[DEBUGBUF_SIZE];
 };
 
-# include <pal.h>
-# include <pal_debug.h>
-# include <pal_error.h>
+#include <pal.h>
+#include <pal_debug.h>
+#include <pal_error.h>
 
 extern PAL_HANDLE debug_handle;
 
-# include <stdarg.h>
+#include <stdarg.h>
 
-void debug_printf (const char * fmt, ...);
+void debug_printf (const char * fmt, ...)
+#ifdef __GNUC__
+    // Tell gcc to verify variadic parameters against format string specifiers.
+    __attribute__((format(printf, 1, 2)))
+#endif
+    ;
 void debug_puts (const char * str);
 void debug_putch (int ch);
 void debug_vprintf (const char * fmt, va_list * ap);
 
-# define VMID_PREFIX     "[P%04u] "
-# define TID_PREFIX      "[%-5u] "
-# define NOID_PREFIX     "[     ] "
-# define debug(fmt, ...)                                                    \
+#define VMID_PREFIX     "[P%04u] "
+#define TID_PREFIX      "[%-5u] "
+#define NOID_PREFIX     "[     ] "
+#define debug(fmt, ...)                                                     \
     do {                                                                    \
         if (debug_handle)                                                   \
             debug_printf((fmt), ##__VA_ARGS__);                             \

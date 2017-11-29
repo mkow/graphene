@@ -318,7 +318,7 @@ void * malloc (size_t size)
 #endif
 
 #ifdef SLAB_DEBUG_PRINT
-    debug("malloc(%d) = %p (%s:%d)\n", size, mem, file, line);
+    debug("malloc(%zu) = %p (%s:%d)\n", size, mem, file, line);
 #endif
     return mem;
 }
