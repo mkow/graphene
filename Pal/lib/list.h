@@ -170,6 +170,8 @@
 /* This helper takes 3 arguments - all should be containing structures,
  * and the field to use for the offset to the list node */
 #define __list_add(NEW, NEXT, PREV, FIELD) do {       \
+        assert((size_t)(NEXT) != 0xa5a5a5a5a5a5a5a5ULL); \
+        assert((size_t)(PREV) != 0xa5a5a5a5a5a5a5a5ULL); \
         typeof(NEW) __tmp_next = (NEXT);              \
         typeof(NEW) __tmp_prev = (PREV);              \
         __tmp_prev->FIELD.next = (NEW);               \
@@ -182,6 +184,7 @@
     __list_add(NEW, (HEAD)->FIELD.next, HEAD, FIELD)
 
 #define listp_add(NEW, HEAD, FIELD) do {                    \
+        assert((size_t)(NEW) != 0xa5a5a5a5a5a5a5a5ULL);        \
         if ((HEAD)->first == NULL) {                        \
             (HEAD)->first = (NEW);                          \
             (NEW)->FIELD.next = (NEW);                      \
@@ -205,6 +208,7 @@
     __list_add(NEW, HEAD, (HEAD)->FIELD.prev, FIELD)
 
 #define listp_add_tail(NEW, HEAD, FIELD) do {               \
+        assert((size_t)(NEW) != 0xa5a5a5a5a5a5a5a5ULL);        \
         if ((HEAD)->first == NULL) {                        \
             (HEAD)->first = (NEW);                          \
             (NEW)->FIELD.next = (NEW);                      \
@@ -219,6 +223,7 @@
             if ((NODE)->FIELD.next == NODE) {                           \
                 (HEAD)->first = NULL;                                   \
             } else {                                                    \
+                assert((size_t)((NODE)->FIELD.next) != 0xa5a5a5a5a5a5a5a5ULL);\
                 (HEAD)->first = (NODE)->FIELD.next;                     \
             }                                                           \
         }                                                               \
@@ -231,6 +236,8 @@
 #define listp_del_init(NODE, HEAD, FIELD) do {  \
         listp_del(NODE, HEAD, FIELD);           \
         INIT_LIST_HEAD(NODE, FIELD);            \
+        assert((size_t)((NODE)->FIELD.next) != 0xa5a5a5a5a5a5a5a5ULL);\
+        assert((size_t)((NODE)->FIELD.prev) != 0xa5a5a5a5a5a5a5a5ULL);\
     } while(0)
             
 /* Keep vestigial TYPE and FIELD parameters to minimize disruption

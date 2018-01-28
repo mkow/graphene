@@ -287,30 +287,28 @@ static inline void destroy_slab_mgr (SLAB_MGR mgr)
     system_free(mgr, addr - (void *) mgr);
 }
 
-static inline SLAB_MGR enlarge_slab_mgr (SLAB_MGR mgr, int level)
+static inline void enlarge_slab_mgr (SLAB_MGR mgr, int level)
 {
     SLAB_AREA area;
-    int size;
+    size_t size;
 
     if (level >= SLAB_LEVEL) {
-        system_lock();
-        goto out;
+        //system_lock(); wtf?!?!
+        return;
     }
 
     size = mgr->size[level];
     area = (SLAB_AREA) system_malloc(__MAX_MEM_SIZE(slab_levels[level], size));
-    if (area <= 0)
-        return NULL;
+    if (!area)
+        return;
 
     system_lock();
     area->size = size;
     INIT_LIST_HEAD(area, __list);
+    assert((size_t)(mgr->area_list[level].first) != 0xa5a5a5a5a5a5a5a5);
     listp_add(area, &mgr->area_list[level], __list);
     __set_free_slab_area(area, mgr, level);
     system_unlock();
-
-out:
-    return mgr;
 }
 
 static inline void * slab_alloc (SLAB_MGR mgr, int size)
@@ -347,6 +345,19 @@ static inline void * slab_alloc (SLAB_MGR mgr, int size)
 
     if (!listp_empty(&mgr->free_list[level])) {
         mobj = listp_first_entry(&mgr->free_list[level], SLAB_OBJ_TYPE, __list);
+
+        if (mobj->__list.next->__list.prev != mobj) {
+            pal_printf("HEAD = (first: %p)\n", mgr->free_list[level].first);//, mgr->free_list[level].prev);
+            pal_printf("mobj = (next: %p, prev: %p)\n", mobj->__list.next, mobj->__list.prev);
+
+            pal_printf("---------------\n");
+            struct slab_obj* tmp = (void*)0xDDDDDDDDDDDDDDDDULL;
+            listp_for_each_entry(tmp, &mgr->free_list[level], __list) {
+                assert((size_t)(tmp) != 0xa5a5a5a5a5a5a5a5ULL);
+                pal_printf("next: %p, prev: %p\n", tmp->__list.next, tmp->__list.prev);
+            }
+        }
+
         listp_del(mobj, &mgr->free_list[level], __list);
     } else {
         mobj = (void *) mgr->addr[level];
@@ -361,6 +372,7 @@ static inline void * slab_alloc (SLAB_MGR mgr, int size)
     *m = SLAB_CANARY_STRING;
 #endif
 
+    assert(OBJ_RAW(mobj) != NULL);
     return OBJ_RAW(mobj);
 }
 
