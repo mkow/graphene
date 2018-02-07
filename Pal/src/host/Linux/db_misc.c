@@ -116,9 +116,9 @@ unsigned long _DkSystemTimeQuery (void)
 }
 
 #if USE_ARCH_RDRAND == 1
-int _DkRandomBitsRead (void * buffer, int size)
+size_t _DkRandomBitsRead (void * buffer, size_t size)
 {
-    int total_bytes = 0;
+    size_t total_bytes = 0;
     do {
         unsigned long rand;
         asm volatile (".Lretry: rdrand %%rax\r\n jnc .Lretry\r\n"
@@ -128,7 +128,7 @@ int _DkRandomBitsRead (void * buffer, int size)
             *(unsigned long *) (buffer + total_bytes) = rand;
             total_bytes += sizeof(rand);
         } else {
-            for (int i = 0 ; i < size - total_bytes ; i++)
+            for (size_t i = 0 ; i < size - total_bytes ; i++)
                 *(unsigned char *) (buffer + total_bytes + i) = ((unsigned char *) &rand)[i];
             total_bytes = size;
         }
@@ -136,7 +136,7 @@ int _DkRandomBitsRead (void * buffer, int size)
     return total_bytes;
 }
 #else
-int _DkRandomBitsRead (void * buffer, int size)
+size_t _DkRandomBitsRead (void * buffer, size_t size)
 {
     if (!pal_sec.random_device) {
         int fd = INLINE_SYSCALL(open, 3, RANDGEN_DEVICE, O_RDONLY, 0);
@@ -146,10 +146,10 @@ int _DkRandomBitsRead (void * buffer, int size)
         pal_sec.random_device = fd;
     }
 
-    int total_bytes = 0;
+    size_t total_bytes = 0;
     do {
-        int bytes = INLINE_SYSCALL(read, 3, pal_sec.random_device,
-                                   buffer + total_bytes, size - total_bytes);
+        size_t bytes = INLINE_SYSCALL(read, 3, pal_sec.random_device,
+                                      buffer + total_bytes, size - total_bytes);
         if (IS_ERR(bytes))
             return -PAL_ERROR_DENIED;
 

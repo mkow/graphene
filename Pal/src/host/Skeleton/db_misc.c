@@ -44,7 +44,7 @@ unsigned long _DkSystemTimeQuery (void)
     return 0;
 }
 
-int _DkRandomBitsRead (void * buffer, int size)
+size_t _DkRandomBitsRead (void * buffer, size_t size)
 {
     return -PAL_ERROR_NOTIMPLEMENTED;
 }

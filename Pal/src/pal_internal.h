@@ -34,6 +34,8 @@
 # error "pal_internal.h can only be included in PAL"
 #endif
 
+typedef int64_t ssize_t;
+
 #define PAL_FILE(name) XSTRINGIFY(PAL_DIR) "/" name
 #define RUNTIME_FILE(name) XSTRINGIFY(RUNTIME_DIR) "/" name
 
@@ -46,7 +48,7 @@ struct handle_ops {
 
     /* 'getname' is used by DkStreamGetName. It's different from
        'getrealpath' */
-    int (*getname) (PAL_HANDLE handle, char * buffer, int count);
+    int (*getname) (PAL_HANDLE handle, char * buffer, size_t count);
 
     /* 'open' is used by DkStreamOpen. 'handle' is a preallocated handle,
        'type' will be a normalized prefix, 'uri' is the remaining string
@@ -56,17 +58,17 @@ struct handle_ops {
 
     /* 'read' and 'write' is used by DkStreamRead and DkStreamWrite, so
        they have exactly same prototype as them.  */
-    int64_t (*read) (PAL_HANDLE handle, uint64_t offset, uint64_t count,
-                     void * buffer);
-    int64_t (*write) (PAL_HANDLE handle, uint64_t offset, uint64_t count,
-                      const void * buffer);
+    size_t (*read) (PAL_HANDLE handle, uint64_t offset, size_t count,
+                    void * buffer);
+    size_t (*write) (PAL_HANDLE handle, uint64_t offset, size_t count,
+                     const void * buffer);
 
     /* 'readbyaddr' and 'writebyaddr' are the same as read and write,
        but with extra field to specify address */
-    int64_t (*readbyaddr) (PAL_HANDLE handle, uint64_t offset, uint64_t count,
-                           void * buffer, char * addr, int addrlen);
-    int64_t (*writebyaddr) (PAL_HANDLE handle, uint64_t offset, uint64_t count,
-                            const void * buffer, const char * addr, int addrlen);
+    int64_t (*readbyaddr) (PAL_HANDLE handle, uint64_t offset, size_t count,
+                           void * buffer, char * addr, size_t addrlen);
+    int64_t (*writebyaddr) (PAL_HANDLE handle, uint64_t offset, size_t count,
+                            const void * buffer, const char * addr, size_t addrlen);
 
     /* 'close' and 'delete' is used by DkObjectClose and DkStreamDelete,
        'close' will close the stream, while 'delete' actually destroy
@@ -78,11 +80,11 @@ struct handle_ops {
        it's not necessary mapped by mmap, so unmap also needs 'handle'
        to deal with special cases */
     int (*map) (PAL_HANDLE handle, void ** address, int prot, uint64_t offset,
-                uint64_t size);
+                size_t size);
 
     /* 'setlength' is used by DkStreamFlush. It truncate the stream
        to certain size. */
-    int64_t (*setlength) (PAL_HANDLE handle, uint64_t length);
+    int64_t (*setlength) (PAL_HANDLE handle, size_t length);
 
     /* 'flush' is used by DkStreamFlush. It syncs the stream to the device */
     int (*flush) (PAL_HANDLE handle);
@@ -208,8 +210,8 @@ extern struct pal_internal_state {
 
     struct config_store * root_config;
 
-    unsigned long   pagesize;
-    unsigned long   alloc_align, alloc_shift, alloc_mask;
+    size_t          pagesize;
+    size_t          alloc_align, alloc_shift, alloc_mask;
 
     PAL_HANDLE      console;
 
@@ -259,7 +261,7 @@ void pal_main (
 unsigned long _DkGetPagesize (void);
 unsigned long _DkGetAllocationAlignment (void);
 void _DkGetAvailableUserAddressRange (PAL_PTR * start, PAL_PTR * end);
-bool _DkCheckMemoryMappable (const void * addr, int size);
+bool _DkCheckMemoryMappable (const void * addr, size_t size);
 PAL_NUM _DkGetProcessId (void);
 PAL_NUM _DkGetHostId (void);
 unsigned long _DkMemoryQuota (void);
@@ -271,18 +273,18 @@ void _DkGetCPUInfo (PAL_CPU_INFO * info);
 int _DkStreamOpen (PAL_HANDLE * handle, const char * uri,
                    int access, int share, int create, int options);
 int _DkStreamDelete (PAL_HANDLE handle, int access);
-int64_t _DkStreamRead (PAL_HANDLE handle, uint64_t offset, uint64_t count,
-                       void * buf, char * addr, int addrlen);
-int64_t _DkStreamWrite (PAL_HANDLE handle, uint64_t offset, uint64_t count,
-                        const void * buf, const char * addr, int addrlen);
+int64_t _DkStreamRead (PAL_HANDLE handle, uint64_t offset, size_t count,
+                       void * buf, char * addr, size_t addrlen);
+int64_t _DkStreamWrite (PAL_HANDLE handle, uint64_t offset, size_t count,
+                        const void * buf, const char * addr, size_t addrlen);
 int _DkStreamAttributesQuery (const char * uri, PAL_STREAM_ATTR * attr);
 int _DkStreamAttributesQuerybyHandle (PAL_HANDLE hdl, PAL_STREAM_ATTR * attr);
 int _DkStreamMap (PAL_HANDLE handle, void ** addr, int prot, uint64_t offset,
-                  uint64_t size);
-int _DkStreamUnmap (void * addr, uint64_t size);
-int64_t _DkStreamSetLength (PAL_HANDLE handle, uint64_t length);
+                  size_t size);
+int _DkStreamUnmap (void * addr, size_t size);
+ssize_t _DkStreamSetLength (PAL_HANDLE handle, size_t length);
 int _DkStreamFlush (PAL_HANDLE handle);
-int _DkStreamGetName (PAL_HANDLE handle, char * buf, int size);
+ssize_t _DkStreamGetName (PAL_HANDLE handle, char * buf, size_t size);
 const char * _DkStreamRealpath (PAL_HANDLE hdl);
 int _DkSendHandle(PAL_HANDLE hdl, PAL_HANDLE cargo);
 int _DkReceiveHandle(PAL_HANDLE hdl, PAL_HANDLE * cargo);
@@ -316,9 +318,9 @@ int _DkEventWait (PAL_HANDLE event);
 int _DkEventClear (PAL_HANDLE event);
 
 /* DkVirtualMemory calls */
-int _DkVirtualMemoryAlloc (void ** paddr, uint64_t size, int alloc_type, int prot);
-int _DkVirtualMemoryFree (void * addr, uint64_t size);
-int _DkVirtualMemoryProtect (void * addr, uint64_t size, int prot);
+int _DkVirtualMemoryAlloc (void ** paddr, size_t size, int alloc_type, int prot);
+int _DkVirtualMemoryFree (void * addr, size_t size);
+int _DkVirtualMemoryProtect (void * addr, size_t size, int prot);
 
 /* DkObject calls */
 int _DkObjectReference (PAL_HANDLE objectHandle);
@@ -335,15 +337,15 @@ void _DkExceptionReturn (void * event);
 int _DkInternalLock (PAL_LOCK * mut);
 int _DkInternalUnlock (PAL_LOCK * mut);
 unsigned long _DkSystemTimeQuery (void);
-int _DkFastRandomBitsRead (void * buffer, int size);
-int _DkRandomBitsRead (void * buffer, int size);
+size_t _DkFastRandomBitsRead (void * buffer, size_t size);
+size_t _DkRandomBitsRead (void * buffer, size_t size);
 int _DkSegmentRegisterSet (int reg, const void * addr);
 int _DkSegmentRegisterGet (int reg, void ** addr);
-int _DkInstructionCacheFlush (const void * addr, int size);
+int _DkInstructionCacheFlush (const void * addr, size_t size);
 int _DkCreatePhysicalMemoryChannel (PAL_HANDLE * handle, unsigned long * key);
-int _DkPhysicalMemoryCommit (PAL_HANDLE channel, int entries,
+int _DkPhysicalMemoryCommit (PAL_HANDLE channel, size_t entries,
                              PAL_PTR * addrs, PAL_NUM * sizes, int flags);
-int _DkPhysicalMemoryMap (PAL_HANDLE channel, int entries,
+int _DkPhysicalMemoryMap (PAL_HANDLE channel, size_t entries,
                           PAL_PTR * addrs, PAL_NUM * sizes, PAL_FLG * prots);
 int _DkCpuIdRetrieve (unsigned int leaf, unsigned int subleaf, unsigned int values[4]);
 
@@ -364,7 +366,7 @@ int load_elf_object_by_handle (PAL_HANDLE handle, enum object_type type);
 int add_elf_object(void * addr, PAL_HANDLE handle, int type);
 
 #ifndef NO_INTERNAL_ALLOC
-void init_slab_mgr (int alignment);
+void init_slab_mgr (size_t alignment);
 void * malloc (size_t size);
 void * remalloc (const void * mem, size_t size);
 void * calloc (size_t nmem, size_t size);
@@ -392,7 +394,7 @@ void free (void * mem);
 # define extern_alias(name)
 #endif
 
-void _DkPrintConsole (const void * buf, int size);
+void _DkPrintConsole (const void * buf, size_t size);
 int printf  (const char  *fmt, ...);
 #include <stdarg.h>
 int vprintf(const char * fmt, va_list *ap);

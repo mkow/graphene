@@ -32,10 +32,10 @@
 #include <sys/mman.h>
 
 #ifndef system_malloc
-#error "macro \"void * system_malloc(int size)\" not declared"
+#error "macro \"void * system_malloc(size_t size)\" not declared"
 #endif
 #ifndef system_free
-#error "macro \"void * system_free(void * ptr, int size)\" not declared"
+#error "macro \"void * system_free(void * ptr, size_t size)\" not declared"
 #endif
 #ifndef system_lock
 #define system_lock() ({})
@@ -89,7 +89,7 @@ DEFINE_LIST(slab_area);
 
 typedef struct __attribute__((packed)) slab_area {
     LIST_TYPE(slab_area) __list;
-    unsigned int size;
+    size_t size;
     unsigned char pad[AREA_PADDING];
     unsigned char raw[];
 } SLAB_AREA_TYPE, * SLAB_AREA;
@@ -137,20 +137,20 @@ struct slab_debug {
 # endif
 #endif
 
-static int slab_levels[SLAB_LEVEL] = { SLAB_LEVEL_SIZES };
+static size_t slab_levels[SLAB_LEVEL] = { SLAB_LEVEL_SIZES };
 
 DEFINE_LISTP(slab_obj);
 DEFINE_LISTP(slab_area);
 typedef struct slab_mgr {
     LISTP_TYPE(slab_area) area_list[SLAB_LEVEL];
     LISTP_TYPE(slab_obj) free_list[SLAB_LEVEL];
-    unsigned int size[SLAB_LEVEL];
+    size_t size[SLAB_LEVEL];
     void * addr[SLAB_LEVEL], * addr_top[SLAB_LEVEL];
 } SLAB_MGR_TYPE, * SLAB_MGR;
 
 typedef struct __attribute__((packed)) large_mem_obj {
     // offset 0
-    unsigned long size;
+    size_t size;
     unsigned char large_padding[LARGE_OBJ_PADDING];
     // offset 16
     unsigned char level;
@@ -184,35 +184,35 @@ typedef struct __attribute__((packed)) large_mem_obj {
             (__INIT_MIN_MEM_SIZE() + __INIT_SUM_OBJ_SIZE((size)))
 
 #ifdef PAGE_SIZE
-static inline int size_align_down(int slab_size, int size)
+static inline size_t size_align_down(size_t slab_size, size_t size)
 {
-    int s = __MAX_MEM_SIZE(slab_size, size);
-    int p = s - (s & ~(PAGE_SIZE - 1));
-    int o = __SUM_OBJ_SIZE(slab_size, 1);
+    size_t s = __MAX_MEM_SIZE(slab_size, size);
+    size_t p = s - (s & ~(PAGE_SIZE - 1));
+    size_t o = __SUM_OBJ_SIZE(slab_size, 1);
     return size - p / o - (p % o ? 1 : 0);
 }
 
-static inline int size_align_up(int slab_size, int size)
+static inline size_t size_align_up(size_t slab_size, size_t size)
 {
-    int s = __MAX_MEM_SIZE(slab_size, size);
-    int p = ((s + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1)) - s;
-    int o = __SUM_OBJ_SIZE(slab_size, 1);
+    size_t s = __MAX_MEM_SIZE(slab_size, size);
+    size_t p = ((s + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1)) - s;
+    size_t o = __SUM_OBJ_SIZE(slab_size, 1);
     return size + p / o;
 }
 
-static inline int init_align_down(int size)
+static inline size_t init_align_down(size_t size)
 {
-    int s = __INIT_MAX_MEM_SIZE(size);
-    int p = s - (s & ~(PAGE_SIZE - 1));
-    int o = __INIT_SUM_OBJ_SIZE(1);
+    size_t s = __INIT_MAX_MEM_SIZE(size);
+    size_t p = s - (s & ~(PAGE_SIZE - 1));
+    size_t o = __INIT_SUM_OBJ_SIZE(1);
     return size - p /o - (p % o ? 1 : 0);
 }
 
-static inline int init_size_align_up(int size)
+static inline size_t init_size_align_up(size_t size)
 {
-    int s = __INIT_MAX_MEM_SIZE(size);
-    int p = ((s + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1)) - s;
-    int o = __INIT_SUM_OBJ_SIZE(1);
+    size_t s = __INIT_MAX_MEM_SIZE(size);
+    size_t p = ((s + PAGE_SIZE - 1) & ~(PAGE_SIZE - 1)) - s;
+    size_t o = __INIT_SUM_OBJ_SIZE(1);
     return size + p / o;
 }
 #endif /* PAGE_SIZE */
@@ -224,7 +224,7 @@ static inline int init_size_align_up(int size)
 static inline void __set_free_slab_area (SLAB_AREA area, SLAB_MGR mgr,
                                          int level)
 {
-    int slab_size = slab_levels[level] + SLAB_HDR_SIZE;
+    size_t slab_size = slab_levels[level] + SLAB_HDR_SIZE;
     mgr->addr[level] = (void *) area->raw;
     mgr->addr_top[level] = (void *) area->raw + (area->size * slab_size);
     mgr->size[level] += area->size;
@@ -233,9 +233,9 @@ static inline void __set_free_slab_area (SLAB_AREA area, SLAB_MGR mgr,
 static inline SLAB_MGR create_slab_mgr (void)
 {
 #ifdef PAGE_SIZE
-    int size = init_size_align_up(STARTUP_SIZE);
+    size_t size = init_size_align_up(STARTUP_SIZE);
 #else
-    int size = STARTUP_SIZE;
+    size_t size = STARTUP_SIZE;
 #endif
     unsigned long mem;
     SLAB_AREA area;
@@ -291,7 +291,7 @@ static inline void destroy_slab_mgr (SLAB_MGR mgr)
 static inline SLAB_MGR enlarge_slab_mgr (SLAB_MGR mgr, int level)
 {
     SLAB_AREA area;
-    int size;
+    size_t size;
 
     /* DEP 11/24/17: I don't see how this case is possible.
      * Either way, we should be consistent with whether to
@@ -323,7 +323,7 @@ static inline SLAB_MGR enlarge_slab_mgr (SLAB_MGR mgr, int level)
     return mgr;
 }
 
-static inline void * slab_alloc (SLAB_MGR mgr, int size)
+static inline void * slab_alloc (SLAB_MGR mgr, size_t size)
 {
     SLAB_OBJ mobj;
     int i;
@@ -377,7 +377,7 @@ static inline void * slab_alloc (SLAB_MGR mgr, int size)
 }
 
 #ifdef SLAB_DEBUG
-static inline void * slab_alloc_debug (SLAB_MGR mgr, int size,
+static inline void * slab_alloc_debug (SLAB_MGR mgr, size_t size,
                                        const char * file, int line)
 {
     void * mem = slab_alloc(mgr, size);

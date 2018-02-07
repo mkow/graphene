@@ -24,6 +24,8 @@
  * streams.
  */
 
+#include <sys/types.h>
+
 #include "pal_defs.h"
 #include "pal.h"
 #include "pal_internal.h"
@@ -250,8 +252,8 @@ void DkStreamDelete (PAL_HANDLE handle, PAL_FLG access)
 
 /* _DkStreamRead for internal use. Read from stream as absolute offset.
    The actual behavior of stream read is defined by handler */
-int64_t _DkStreamRead (PAL_HANDLE handle, uint64_t offset, uint64_t count,
-                       void * buf, char * addr, int addrlen)
+ssize_t _DkStreamRead (PAL_HANDLE handle, uint64_t offset, size_t count,
+                       void * buf, char * addr, size_t addrlen)
 {
     if (UNKNOWN_HANDLE(handle))
         return -PAL_ERROR_BADHANDLE;
@@ -266,7 +268,7 @@ int64_t _DkStreamRead (PAL_HANDLE handle, uint64_t offset, uint64_t count,
     if (!count)
         return -PAL_ERROR_ZEROSIZE;
 
-    int64_t ret;
+    ssize_t ret;
 
     if (addr) {
         if (!ops->readbyaddr)
@@ -296,7 +298,7 @@ DkStreamRead (PAL_HANDLE handle, PAL_NUM offset, PAL_NUM count,
         LEAVE_PAL_CALL_RETURN(0);
     }
 
-    int64_t ret = _DkStreamRead(handle, offset, count, (void *) buffer,
+    ssize_t ret = _DkStreamRead(handle, offset, count, (void *) buffer,
                                 size ? (char *) source : NULL,
                                 source ? size : 0);
 
@@ -310,8 +312,8 @@ DkStreamRead (PAL_HANDLE handle, PAL_NUM offset, PAL_NUM count,
 
 /* _DkStreamWrite for internal use, write to stream at absolute offset.
    The actual behavior of stream write is defined by handler */
-int64_t _DkStreamWrite (PAL_HANDLE handle, uint64_t offset, uint64_t count,
-                        const void * buf, const char * addr, int addrlen)
+ssize_t _DkStreamWrite (PAL_HANDLE handle, uint64_t offset, size_t count,
+                        const void * buf, const char * addr, size_t addrlen)
 {
     if (UNKNOWN_HANDLE(handle))
         return -PAL_ERROR_BADHANDLE;
@@ -324,7 +326,7 @@ int64_t _DkStreamWrite (PAL_HANDLE handle, uint64_t offset, uint64_t count,
     if (!count)
         return -PAL_ERROR_ZEROSIZE;
 
-    int64_t ret;
+    ssize_t ret;
 
     if (addr) {
         if (!ops->writebyaddr)
@@ -354,7 +356,7 @@ DkStreamWrite (PAL_HANDLE handle, PAL_NUM offset, PAL_NUM count,
         LEAVE_PAL_CALL_RETURN(0);
     }
 
-    int64_t ret = _DkStreamWrite(handle, offset, count, (void *) buffer, dest,
+    ssize_t ret = _DkStreamWrite(handle, offset, count, (void *) buffer, dest,
                                  dest ? strlen(dest) : 0);
 
     if (ret < 0) {
@@ -489,7 +491,7 @@ DkStreamAttributesSetbyHandle (PAL_HANDLE handle, PAL_STREAM_ATTR * attr)
     LEAVE_PAL_CALL_RETURN(PAL_TRUE);
 }
 
-int _DkStreamGetName (PAL_HANDLE handle, char * buffer, int size)
+ssize_t _DkStreamGetName (PAL_HANDLE handle, char * buffer, size_t size)
 {
     const struct handle_ops * ops = HANDLE_OPS(handle);
     assert(ops);
@@ -498,7 +500,7 @@ int _DkStreamGetName (PAL_HANDLE handle, char * buffer, int size)
     if (!ops->getname)
         return -PAL_ERROR_NOTSUPPORT;
 
-    int ret = ops->getname(handle, buffer, size - 1);
+    ssize_t ret = ops->getname(handle, buffer, size - 1);
 
     if (ret < 0)
         return ret;
@@ -537,7 +539,7 @@ PAL_NUM DkStreamGetName (PAL_HANDLE handle, PAL_PTR buffer, PAL_NUM size)
 /* _DkStreamMap for internal use. Map specific handle to certain memory,
    with given protection, offset and size */
 int _DkStreamMap (PAL_HANDLE handle, void ** paddr, int prot, uint64_t offset,
-                  uint64_t size)
+                  size_t size)
 {
     void * addr = *paddr;
     int ret;
@@ -620,7 +622,7 @@ void DkStreamUnmap (PAL_PTR addr, PAL_NUM size)
 
 /* _DkStreamSetLength for internal use. This function truncate the stream
    to certain length. This call might not be support for certain streams */
-int64_t _DkStreamSetLength (PAL_HANDLE handle, uint64_t length)
+ssize_t _DkStreamSetLength (PAL_HANDLE handle, size_t length)
 {
     if (UNKNOWN_HANDLE(handle))
         return -PAL_ERROR_BADHANDLE;
@@ -645,7 +647,7 @@ DkStreamSetLength (PAL_HANDLE handle, PAL_NUM length)
         LEAVE_PAL_CALL_RETURN(0);
     }
 
-    int64_t ret = _DkStreamSetLength(handle, length);
+    ssize_t ret = _DkStreamSetLength(handle, length);
 
     if (ret < 0) {
         _DkRaiseFailure(-ret);

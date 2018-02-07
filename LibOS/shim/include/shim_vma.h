@@ -43,7 +43,7 @@ DEFINE_LIST(shim_vma);
 struct shim_vma {
     REFTYPE                 ref_count;
     void *                  addr;
-    uint64_t                length;
+    size_t                  length;
     int                     prot;
     int                     flags;
     uint64_t                offset;
@@ -90,40 +90,40 @@ static inline PAL_FLG PAL_PROT (int prot, int flags)
 int init_vma (void);
 
 /* Bookkeeping mmap() system call */
-int bkeep_mmap (void * addr, uint64_t length, int prot, int flags,
+int bkeep_mmap (void * addr, size_t length, int prot, int flags,
                 struct shim_handle * file, uint64_t offset, const char * comment);
 
 /* Bookkeeping munmap() system call */
-int bkeep_munmap (void * addr, uint64_t length, const int * flags);
+int bkeep_munmap (void * addr, size_t length, const int * flags);
 
 /* Bookkeeping mprotect() system call */
-int bkeep_mprotect (void * addr, uint64_t length, int prot, const int * flags);
+int bkeep_mprotect (void * addr, size_t length, int prot, const int * flags);
 
 /* Get vma bookkeeping handle */
 void get_vma (struct shim_vma * vma);
 void put_vma (struct shim_vma * vma);
 
-int lookup_supervma (const void * addr, uint64_t len, struct shim_vma ** vma);
-int lookup_overlap_vma (const void * addr, uint64_t len, struct shim_vma ** vma);
+int lookup_supervma (const void * addr, size_t len, struct shim_vma ** vma);
+int lookup_overlap_vma (const void * addr, size_t len, struct shim_vma ** vma);
 
 struct shim_vma * next_vma (struct shim_vma * vma);
 
-void * get_unmapped_vma (uint64_t len, int flags);
-void * get_unmapped_vma_for_cp (uint64_t len);
+void * get_unmapped_vma (size_t len, int flags);
+void * get_unmapped_vma_for_cp (size_t len);
 
-int dump_all_vmas (struct shim_thread * thread, char * buf, uint64_t size);
+size_t dump_all_vmas (struct shim_thread * thread, char * buf, size_t size);
 
 void unmap_all_vmas (void);
 
 /* Debugging */
 void debug_print_vma_list (void);
 
-void print_vma_hash (struct shim_vma * vma, void * addr, uint64_t len,
+void print_vma_hash (struct shim_vma * vma, void * addr, size_t len,
                      bool force_protect);
 
 /* Constants */
-extern unsigned long mem_max_npages;
-extern unsigned long brk_max_size;
-extern unsigned long sys_stack_size;
+extern size_t mem_max_npages;
+extern size_t brk_max_size;
+extern size_t sys_stack_size;
 
 #endif /* _SHIM_VMA_H_ */

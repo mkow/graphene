@@ -32,7 +32,7 @@
 #include "pal_error.h"
 #include "pal_debug.h"
 
-static int slab_alignment;
+static size_t slab_alignment;
 static PAL_LOCK slab_mgr_lock = LOCK_INIT;
 
 #define system_lock()   _DkInternalLock(&slab_mgr_lock)
@@ -49,7 +49,7 @@ static char *mem_pool_end = &mem_pool[POOL_SIZE];
 
 #define STARTUP_SIZE    2
 
-static inline void * __malloc (int size)
+static inline void * __malloc (size_t size)
 {
     void * addr = NULL;
 
@@ -68,7 +68,7 @@ static inline void * __malloc (int size)
 
 #define system_malloc(size) __malloc(size)
 
-static inline void __free (void * addr, int size)
+static inline void __free (void * addr, size_t size)
 {
 #if STATIC_SLAB == 1
     if ((char *) addr >= (char *) mem_pool && (char *) addr + size <= (char *) mem_pool_end)
@@ -84,7 +84,7 @@ static inline void __free (void * addr, int size)
 
 static SLAB_MGR slab_mgr = NULL;
 
-void init_slab_mgr (int alignment)
+void init_slab_mgr (size_t alignment)
 {
     if (slab_mgr)
         return;
