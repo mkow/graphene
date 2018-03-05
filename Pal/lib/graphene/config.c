@@ -31,12 +31,15 @@
 DEFINE_LIST(config);
 struct config {
     const char * key, * val;
-    size_t klen, vlen; /* for leaf nodes, vlen stores the size of config
-                          values; for branch nodes, vlen stores the sum
-                          of config value lengths plus one of all the
-                          immediate children. */
+    // Both sizes include the terminating null bytes.
+    size_t klen;
+    size_t vlen;  // For leaf nodes: size of the `val`.
+                  // For non-leaf nodes: sum of immediate children `val` lengths. // <- TODO
+    // A buffer used to store both `key` and `val` strings.
     char * buf;
-    LIST_TYPE(config) list;
+    
+    LIST_TYPE(config) list;  // All entries from the whole tree are connected to
+                             // this list.
     LISTP_TYPE(config) children;
     LIST_TYPE(config) siblings; 
 };
@@ -131,20 +134,21 @@ next:
     return e;
 }
 
-ssize_t get_config (struct config_store * store, const char * key,
-                    char * val_buf, size_t size)
+int get_config (struct config_store * store, const char * key,
+                char** out_buf)
 {
     struct config * e = __get_config(store, key);
+    *out_buf = NULL;
 
     if (!e || !e->val)
         return -PAL_ERROR_INVAL;
 
-    if (e->vlen >= size)
-        return -PAL_ERROR_TOOLONG;
-
-    memcpy(val_buf, e->val, e->vlen);
-    val_buf[e->vlen] = 0;
-    return e->vlen;
+    *out_buf = malloc(e->vlen + 1);
+    if (!*out_buf)
+        return -PAL_ERROR_NOMEM;
+    memcpy(*out_buf, e->val, e->vlen);
+    (*out_buf)[e->vlen] = 0;
+    return 0;
 }
 
 int get_config_entries (struct config_store * store, const char * key,
@@ -218,8 +222,7 @@ static int __del_config (struct config_store * store,
         p->vlen -= (found->klen + 1);
     listp_del(found, root, siblings);
     listp_del(found, &store->entries, list);
-    if (found->buf)
-        store->free(found->buf);
+    store->free(found->buf);
     store->free(found);
 
     return 0;
@@ -255,7 +258,7 @@ int set_config (struct config_store * store, const char * key, const char * val)
             store->free(buf);
             return ret;
         }
-        e->buf  = buf;
+        e->buf = buf;
     }
 
     return 0;
@@ -369,18 +372,16 @@ inval:
     return -PAL_ERROR_INVAL;
 }
 
-int free_config (struct config_store * store)
+void free_config (struct config_store * store)
 {
     struct config * e, * n;
     listp_for_each_entry_safe(e, n, &store->entries, list) {
-        if (e->buf)
-            store->free(e->buf);
+        store->free(e->buf);
         store->free(e);
     }
 
     INIT_LISTP(&store->root);
     INIT_LISTP(&store->entries);
-    return 0;
 }
 
 static int __dup_config (const struct config_store * ss,

@@ -59,22 +59,24 @@ static inline const char * file_uri_to_path (const char * uri, int len)
 
 static const char * __get_path (struct config_store * config, const char * key)
 {
-    char uri[CONFIG_MAX];
+    char* uri;
 
-    if (get_config(config, key, uri, CONFIG_MAX) <= 0 ||
-        !is_file_uri(uri))
+    if (get_config(config, key, &uri) < 0 || !is_file_uri(uri))
         return NULL;
 
-    return file_uri_to_path(uri, strlen(uri));
+    const char* res = file_uri_to_path(uri, strlen(uri));
+    free(uri);
+    return res;
 }
 
 #define PRELOAD_MAX     16
 
 int get_preload_paths (struct config_store * config, const char *** paths)
 {
-    char cfgbuf[CONFIG_MAX];
+    int ret = 0;
+    char* cfgbuf;
 
-    if (get_config(config, "loader.preload", cfgbuf, CONFIG_MAX) <= 0)
+    if (get_config(config, "loader.preload", &cfgbuf) < 0)
         return 0;
 
     const char * p = cfgbuf, * n;
@@ -84,21 +86,27 @@ int get_preload_paths (struct config_store * config, const char *** paths)
     while (*p && npreload < PRELOAD_MAX) {
         for (n = p ; *n && *n != ',' ; n++);
 
-        if (!is_file_uri(p))
-            goto next;
+        if (is_file_uri(p) &&
+                !(preload_paths[npreload++] = file_uri_to_path(p, n - p))) {
+            ret = -ENOMEM;
+            goto out;
+        }
 
-        if (!(preload_paths[npreload++] = file_uri_to_path(p, n - p)))
-            return -ENOMEM;
-next:
         p = *n ? n + 1 : n;
     }
 
     *paths = malloc(sizeof(const char *) * npreload);
-    if (!(*paths))
-        return -ENOMEM;
+    if (!*paths) {
+        ret = -ENOMEM;
+        goto out;
+    }
 
-    memcpy((*paths), preload_paths, sizeof(const char *) * npreload);
-    return npreload;
+    memcpy(*paths, preload_paths, sizeof(const char *) * npreload);
+    ret = npreload;
+
+out:
+    free(cfgbuf);
+    return ret;
 }
 
 int get_fs_paths (struct config_store * config, const char *** paths)
@@ -197,16 +205,16 @@ int get_net_rules (struct config_store * config,
 
         for (int i = 0 ; i < nadded ; i++) {
             struct graphene_net_rule * r = &rules[nrules];
-            char cfgbuf[CONFIG_MAX];
+            char* cfgbuf = NULL;
 
             for (n = k ; *n ; n++);
             int len = n - k;
             memcpy(tmp, k, len + 1);
             tmp[len] = 0;
 
-            ssize_t cfglen = get_config(config, key, cfgbuf, CONFIG_MAX);
-            if (cfglen <= 0)
+            if (get_config(config, key, &cfgbuf) < 0)
                 goto next;
+            size_t cfglen = strlen(cfgbuf);  // TODO: Is this correct? Shouldn't get_config_entries be used here?
 
             char * c = cfgbuf, * end = cfgbuf + cfglen;
             char * addr = c, * num;
@@ -259,6 +267,7 @@ int get_net_rules (struct config_store * config,
             nrules++;
 next:
             k = n + 1;
+            free(cfgbuf);
         }
 
         if (t == 0)

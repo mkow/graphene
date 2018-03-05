@@ -309,7 +309,7 @@ static inline SLAB_MGR enlarge_slab_mgr (SLAB_MGR mgr, int level)
     assert (mgr->addr[level] == mgr->addr_top[level]);
     size = mgr->size[level];
     area = (SLAB_AREA) system_malloc(__MAX_MEM_SIZE(slab_levels[level], size));
-    if (area <= 0)
+    if (area < 0)
         return NULL;
 
     system_lock();
@@ -319,7 +319,6 @@ static inline SLAB_MGR enlarge_slab_mgr (SLAB_MGR mgr, int level)
     __set_free_slab_area(area, mgr, level);
     system_unlock();
 
-//out:
     return mgr;
 }
 
@@ -401,6 +400,31 @@ static inline void * slab_alloc_debug (SLAB_MGR mgr, int size,
     return mem;
 }
 #endif
+
+// Returns user buffer size (i.e. excluding size of control structures).
+static inline size_t slab_get_buf_size(SLAB_MGR mgr, const void* ptr)
+{
+    assert(ptr);
+
+    unsigned char level = RAW_TO_LEVEL(ptr);
+
+    if (level == (unsigned char)-1) {
+        LARGE_MEM_OBJ mem = RAW_TO_OBJ(ptr, LARGE_MEM_OBJ_TYPE);
+        return mem->size;
+    }
+
+    if (level >= SLAB_LEVEL) {
+        pal_printf("Heap corruption detected: invalid heap level %ud\n", level);
+        __abort();
+    }
+
+#ifdef SLAB_CANARY
+    const unsigned long * m = (const unsigned long *)(ptr + slab_levels[level]);
+    assert((*m) == SLAB_CANARY_STRING);
+#endif
+
+    return slab_levels[level];
+}
 
 static inline void slab_free (SLAB_MGR mgr, void * obj)
 {

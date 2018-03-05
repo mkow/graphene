@@ -166,6 +166,7 @@ void * malloc (size_t size);
 void free (void * mem);
 void * remalloc (const void * mem, size_t size);
 #endif
+void* realloc(void* ptr, size_t new_size);
 
 static_inline char * qstrtostr (struct shim_qstr * qstr, bool on_stack)
 {

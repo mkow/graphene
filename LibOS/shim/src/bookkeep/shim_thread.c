@@ -223,10 +223,11 @@ struct shim_thread * get_new_thread (IDTYPE new_tid)
         /* This case should fall back to the global root of the file system.
          */
         path_lookupat(NULL, "/", 0, &thread->root, NULL);
-        char dir_cfg[CONFIG_MAX];
+        char* dir_cfg;
         if (root_config &&
-            get_config(root_config, "fs.start_dir", dir_cfg, CONFIG_MAX) > 0) {
+                get_config(root_config, "fs.start_dir", &dir_cfg) >= 0) {
             path_lookupat(NULL, dir_cfg, 0, &thread->cwd, NULL);
+            free(dir_cfg);
         } else if (thread->root) {
             get_dentry(thread->root);
             thread->cwd = thread->root;

@@ -40,7 +40,7 @@ struct shim_sandbox {
 
 static struct shim_sandbox sandbox_info __attribute_migratable;
 
-static inline void append_uri (char * uri, int prefix_len, char * append,
+static inline void append_uri (char * uri, int prefix_len, const char * append,
                                int append_len)
 {
     if (prefix_len && uri[prefix_len - 1] == ':') {
@@ -71,75 +71,79 @@ static int isolate_fs (struct config_store * cfg, const char * path)
     int dpath_len = 0;
     char * dpath = dentry_get_path(dent, true, &dpath_len);
     bool root_created = false;
-    char t[CONFIG_MAX], u[CONFIG_MAX];
-    ssize_t prefix_len;
+    char * type;
+    char * uri;
 
-    int nkeys;
     ssize_t keybuf_size;
     keybuf_size = get_config_entries_size(cfg, "fs.mount.other");
     if (keybuf_size <= 0)
         goto root;
 
     char * keybuf = __alloca(keybuf_size);
-    nkeys = get_config_entries(cfg, "fs.mount.other", keybuf, keybuf_size);
+    int nkeys = get_config_entries(cfg, "fs.mount.other", keybuf, keybuf_size);
 
     if (nkeys <= 0)
         goto root;
 
-    char k[CONFIG_MAX], p[CONFIG_MAX];
-    char * tmp = strcpy_static(k, "fs.mount.other.", CONFIG_MAX);
-    const char * key = keybuf, * next = NULL;
+    char key[CONFIG_MAX];  // TODO(mkow): Remove the limit + fix memleaks.
+    char * tmp = strcpy_static(key, "fs.mount.other.", CONFIG_MAX);
+    char * path_key;
+    const char * subkey = keybuf, * next = NULL;
 
-    for (int n = 0 ; n < nkeys ; key = next, n++) {
-        for (next = key ; *next ; next++);
+    for (int n = 0 ; n < nkeys ; subkey = next, n++) {
+        for (next = subkey ; *next ; next++);
         next++;
-        size_t key_len = next - key - 1;
+        size_t key_len = next - subkey - 1;
+
+        // Build key string
         memcpy(tmp, key, key_len);
-        char * kp = tmp + key_len;
-        ssize_t ulen, plen;
+        char * key_end = tmp + key_len;
         bool is_chroot = false;
 
-        /* Skip FS that are not chroot */
-        strcpy_static(kp, ".type", k + CONFIG_MAX - kp);
-        if (get_config(cfg, k, t, CONFIG_MAX) <= 0)
+        /* Skip FS-es that are not chroot */
+        strcpy_static(key_end, ".type", key + CONFIG_MAX - key_end);
+        if (get_config(cfg, key, &type) < 0)
             continue;
-        if (strpartcmp_static(t, "chroot"))
+        if (strpartcmp_static(type, "chroot"))
             is_chroot = true;
+        free(type);
 
-        strcpy_static(kp, ".uri", k + CONFIG_MAX - kp);
-        if ((ulen = get_config(cfg, k, u, CONFIG_MAX)) <= 0)
+        strcpy_static(key_end, ".uri", key + CONFIG_MAX - key_end);
+        if (get_config(cfg, key, &uri) < 0)
             continue;
+        size_t ulen = strlen(uri);
 
-        strcpy_static(kp, ".path", k + CONFIG_MAX - kp);
-        if ((plen = get_config(cfg, k, p, CONFIG_MAX)) <= 0)
+        strcpy_static(key_end, ".path", key + CONFIG_MAX - key_end);
+        if ((get_config(cfg, key, &path_key)) < 0)
             continue;
+        size_t plen = strlen(path_key);
 
         if (plen >= dpath_len) {
-            if (!memcmp(p, dpath, dpath_len)) {
-                if (!p[dpath_len]) {
+            if (!memcmp(path_key, dpath, dpath_len)) {
+                if (!path_key[dpath_len]) {
                     root_created = true;
-                    debug("kept file rule: %s => %s\n", p, u);
+                    debug("kept file rule: %s => %s\n", path_key, uri);
                     continue;
                 }
-                if (p[dpath_len] != '/')
+                if (path_key[dpath_len] != '/')
                     goto remove;
                 /* keep this FS */
                 continue;
             } else {
 remove:
                 if (!is_chroot) {
-                    debug("kept file rule: %s => %s\n", p, u);
+                    debug("kept file rule: %s => %s\n", path_key, uri);
                     continue;
                 }
-                set_config(cfg, k, NULL);
-                strcpy_static(kp, ".type", k + CONFIG_MAX - kp);
-                set_config(cfg, k, NULL);
-                strcpy_static(kp, ".uri", k + CONFIG_MAX - kp);
-                set_config(cfg, k, NULL);
-                debug("deleted file rule: %s => %s\n", p, u);
+                set_config(cfg, key, NULL);
+                strcpy_static(key_end, ".type", key + CONFIG_MAX - key_end);
+                set_config(cfg, key, NULL);
+                strcpy_static(key_end, ".uri", key + CONFIG_MAX - key_end);
+                set_config(cfg, key, NULL);
+                debug("deleted file rule: %s => %s\n", path_key, uri);
             }
         } else {
-            if (memcmp(p, dpath, plen))
+            if (memcmp(path_key, dpath, plen))
                 goto remove;
 
             assert(dpath[plen]);
@@ -147,39 +151,45 @@ remove:
                 goto remove;
             if (!is_chroot) {
                 root_created = true;
-                debug("kept file rule: %s => %s\n", p, u);
+                debug("kept file rule: %s => %s\n", path_key, uri);
                 continue;
             }
 
-            append_uri(u, ulen, dpath + plen, dpath_len - plen);
-            set_config(cfg, k, dpath);
-            strcpy_static(kp, "uri", k + CONFIG_MAX - kp);
-            set_config(cfg, k, u);
+            uri = realloc(uri, ulen + dpath_len - plen + 2);
+            append_uri(uri, ulen, dpath + plen, dpath_len - plen); // TODO: analyze this function
+            set_config(cfg, key, dpath);
+            strcpy_static(key_end, "uri", key + CONFIG_MAX - key_end);
+            set_config(cfg, key, uri);
             root_created = true;
-            debug("added file rule: %s => %s\n", dpath, u);
+            debug("added file rule: %s => %s\n", dpath, uri);
         }
     }
 
 root:
-    if ((prefix_len = get_config(cfg, "fs.mount.root.uri", u, CONFIG_MAX)) > 0) {
-        if (get_config(cfg, "fs.mount.root.type", t, CONFIG_MAX) > 0 &&
-            strcmp_static(t, "chroot")) {
-            /* remove the root FS */
-            set_config(cfg, "fs.mount.root.uri",  NULL);
-            set_config(cfg, "fs.mount.root.type", NULL);
-            debug("deleted file rule: root\n");
+    type = NULL;
+    uri = NULL;
+    if (get_config(cfg, "fs.mount.root.uri", &uri) >= 0 &&
+            get_config(cfg, "fs.mount.root.type", &type) >= 0 &&
+            strcmp_static(type, "chroot")) {
+        /* remove the root FS */
+        set_config(cfg, "fs.mount.root.uri",  NULL);
+        set_config(cfg, "fs.mount.root.type", NULL);
+        debug("deleted file rule: root\n");
 
 
-            /* add another FS as part of the original root FS */
-            if (!root_created) {
-                append_uri(u, prefix_len, dpath, dpath_len);
-                set_config(cfg, "fs.mount.other.root.path", dpath);
-                set_config(cfg, "fs.mount.other.root.uri",  u);
-                set_config(cfg, "fs.mount.other.root.type", "chroot");
-                debug("added file rule: %s => %s\n", dpath, u);
-            }
+        /* add another FS as part of the original root FS */
+        if (!root_created) {
+            size_t prefix_len = strlen(uri);
+            uri = realloc(uri, prefix_len + dpath_len + 2);
+            append_uri(uri, prefix_len, dpath, dpath_len);
+            set_config(cfg, "fs.mount.other.root.path", dpath);
+            set_config(cfg, "fs.mount.other.root.uri",  uri);
+            set_config(cfg, "fs.mount.other.root.type", "chroot");
+            debug("added file rule: %s => %s\n", dpath, uri);
         }
     }
+    free(type);
+    free(uri);
 
     return 0;
 }
@@ -371,8 +381,7 @@ long shim_do_sandbox_create (int flags, const char * fs_sb,
     if (flags & SANDBOX_RPC)
         del_all_ipc_ports(0);
 
-    if ((ret = free_config(root_config)) < 0)
-        goto err;
+    free_config(root_config);
 
     handle = DkStreamOpen(uri, PAL_ACCESS_RDONLY, 0, 0, 0);
 

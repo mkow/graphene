@@ -130,12 +130,14 @@ struct config_store {
 
 int read_config (struct config_store * store, int (*filter) (const char *, int),
                  const char ** errstring);
-int free_config (struct config_store * store);
+void free_config (struct config_store * store);
 int copy_config (struct config_store * store, struct config_store * new_store);
 int write_config (void * file, int (*write) (void *, void *, int),
                   struct config_store * store);
-ssize_t get_config (struct config_store * cfg, const char * key,
-                    char * val_buf, size_t size);
+// On success `*out_buf` must be freed by the caller.
+// `*out_buf` is NULL on failure.
+int get_config (struct config_store * cfg, const char * key,
+                char** out_buf);
 int get_config_entries (struct config_store * cfg, const char * key,
                         char * key_buf, size_t key_bufsize);
 ssize_t get_config_entries_size (struct config_store * cfg, const char * key);
