@@ -165,14 +165,14 @@ static inline bool test_vma_overlap (struct shim_vma * vma,
    split after we find something */
 static inline void __assert_vma_list (void)
 {
-    struct shim_vma * tmp;
+    struct shim_vma * vma;
     struct shim_vma * prev __attribute__((unused)) = NULL;
 
-    listp_for_each_entry(tmp, &vma_list, list) {
+    listp_for_each_entry(vma, &vma_list, list) {
         /* Assert we are really sorted */
-        assert(tmp->end >= tmp->start);
-        assert(!prev || prev->end <= tmp->start);
-        prev = tmp;
+        assert(vma->end > vma->start);
+        assert(!prev || prev->end <= vma->start);
+        prev = vma;
     }
 }
 
@@ -204,6 +204,10 @@ __insert_vma (struct shim_vma * vma, struct shim_vma * prev)
 {
     assert(!prev || prev->end <= vma->start);
     assert(vma != prev);
+    if (prev) {
+        struct shim_vma* next = listp_next_entry(prev, &vma_list, list);
+        assert(!next || vma->end <= next->start);
+    }
 
     if (prev)
         listp_add_after(vma, prev, &vma_list, list);
@@ -273,8 +277,7 @@ int init_vma (void)
     return 0;
 }
 
-static int __bkeep_mmap (struct shim_vma * prev,
-                         void * start, void * end, int prot, int flags,
+static int __bkeep_mmap (void * start, void * end, int prot, int flags,
                          struct shim_handle * file, uint64_t offset,
                          const char * comment);
 
@@ -373,12 +376,15 @@ __set_vma_comment (struct shim_vma * vma, const char * comment)
     vma->comment[len] = 0;
 }
 
-static int __bkeep_mmap (struct shim_vma * prev,
-                         void * start, void * end, int prot, int flags,
+static int __bkeep_mmap (void * start, void * end, int prot, int flags,
                          struct shim_handle * file, uint64_t offset,
                          const char * comment)
 {
     int ret = 0;
+
+    struct shim_vma* prev;
+    __lookup_vma(start, &prev);
+
     struct shim_vma * new = __get_new_vma();
 
     /* First, remove any overlapping VMAs */
@@ -387,6 +393,10 @@ static int __bkeep_mmap (struct shim_vma * prev,
         __drop_vma(new);
         return ret;
     }
+
+    // Unmapping could have changed the insertion point (e.g. in case where the
+    // mmaped area overlaps with another mapping).
+    __lookup_vma(start, &prev);
 
     /* Inserting the new VMA */
     new->start  = start;
@@ -413,9 +423,7 @@ int bkeep_mmap (void * addr, uint64_t length, int prot, int flags,
           comment ? : "unknown");
 
     lock(vma_list_lock);
-    struct shim_vma * prev = NULL;
-    __lookup_vma(addr, &prev);
-    int ret = __bkeep_mmap(prev, addr, addr + length, prot, flags, file, offset,
+    int ret = __bkeep_mmap(addr, addr + length, prot, flags, file, offset,
                            comment);
     __restore_reserved_vmas();
     unlock(vma_list_lock);
