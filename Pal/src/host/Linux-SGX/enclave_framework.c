@@ -428,14 +428,13 @@ static int register_trusted_file (const char * uri, const char * checksum_str)
 static int init_trusted_file (const char * key, const char * uri)
 {
     char cskey[URI_MAX], * tmp;
-    char checksum[URI_MAX];
+    char* checksum;
     char normpath[URI_MAX];
     
     tmp = strcpy_static(cskey, "sgx.trusted_checksum.", URI_MAX);
     memcpy(tmp, key, strlen(key) + 1);
 
-    ssize_t len = get_config(pal_state.root_config, cskey, checksum, CONFIG_MAX);
-    if (len < 0)
+    if (get_config(pal_state.root_config, cskey, &checksum) < 0)
         return 0;
 
     /* Normalize the uri */
@@ -448,9 +447,11 @@ static int init_trusted_file (const char * key, const char * uri)
     normpath [2] = 'l';
     normpath [3] = 'e';
     normpath [4] = ':';
-    len = get_norm_path(uri + 5, normpath + 5, 0, URI_MAX);
+    get_norm_path(uri + 5, normpath + 5, 0, URI_MAX);
 
-    return register_trusted_file(normpath, checksum);
+    int ret = register_trusted_file(normpath, checksum);
+    free(checksum);
+    return ret;
 }
 
 int init_trusted_files (void)
@@ -466,14 +467,8 @@ int init_trusted_files (void)
             goto out;
     }
 
-    cfgbuf = malloc(CONFIG_MAX);
-    if (!cfgbuf) {
-        ret = -PAL_ERROR_NOMEM;
-        goto out;
-    }
-
-    ssize_t len = get_config(store, "loader.preload", cfgbuf, CONFIG_MAX);
-    if (len > 0) {
+    if (get_config(store, "loader.preload", &cfgbuf) >= 0) {
+        size_t len = strlen(cfgbuf);
         int npreload = 0;
         char key[10];
         const char * start, * end;
@@ -510,18 +505,19 @@ int init_trusted_files (void)
         goto no_trusted;
 
     {
-        char key[CONFIG_MAX], uri[CONFIG_MAX];
+        char key[CONFIG_MAX];
         char * k = cfgbuf, * tmp;
 
         tmp = strcpy_static(key, "sgx.trusted_files.", CONFIG_MAX);
 
         for (int i = 0 ; i < nuris ; i++) {
-            len = strlen(k);
+            size_t len = strlen(k);
             memcpy(tmp, k, len + 1);
             k += len + 1;
-            len = get_config(store, key, uri, CONFIG_MAX);
-            if (len > 0) {
+            char* uri;
+            if (get_config(store, key, &uri) >= 0) {
                 ret = init_trusted_file(key + 18, uri);
+                free(uri);
                 if (ret < 0)
                     goto out;
             }
@@ -546,28 +542,32 @@ no_trusted:
         goto no_allowed;
 
     {
-        char key[CONFIG_MAX], uri[CONFIG_MAX];
+        char key[CONFIG_MAX];
+        char* uri;
         char * k = cfgbuf, * tmp;
 
         tmp = strcpy_static(key, "sgx.allowed_files.", CONFIG_MAX);
 
         for (int i = 0 ; i < nuris ; i++) {
-            len = strlen(k);
+            size_t len = strlen(k);
             memcpy(tmp, k, len + 1);
             k += len + 1;
-            len = get_config(store, key, uri, CONFIG_MAX);
-            if (len > 0)
+            if (get_config(store, key, &uri) >= 0) {
                 register_trusted_file(uri, NULL);
+                free(uri);
+            }
         }
     }
 
 no_allowed:
     ret = 0;
 
-    if (get_config(store, "sgx.allow_file_creation", cfgbuf, CONFIG_MAX) <= 0) {
+    free(cfgbuf);
+    if (get_config(store, "sgx.allow_file_creation", &cfgbuf) < 0) {
         allow_file_creation = 0;
-    } else
+    } else {
         allow_file_creation = 1;
+    }
 
 out:
     free(cfgbuf);
@@ -579,7 +579,6 @@ int init_trusted_children (void)
     struct config_store * store = pal_state.root_config;
 
     char key[CONFIG_MAX], mrkey[CONFIG_MAX];
-    char uri[CONFIG_MAX], mrenclave[CONFIG_MAX];
 
     char * tmp1 = strcpy_static(key, "sgx.trusted_children.", CONFIG_MAX);
     char * tmp2 = strcpy_static(mrkey, "sgx.trusted_mrenclave.", CONFIG_MAX);
@@ -602,13 +601,14 @@ int init_trusted_children (void)
             memcpy(tmp2, k, len + 1);
             k += len + 1;
 
-            ssize_t ret = get_config(store, key, uri, CONFIG_MAX);
-            if (ret < 0)
-                continue;
-
-            ret = get_config(store, mrkey, mrenclave, CONFIG_MAX);
-            if (ret > 0)
+            char* uri;
+            char* mrenclave;
+            if (get_config(store, key, &uri) >= 0 &&
+                    get_config(store, mrkey, &mrenclave) >= 0) {
                 register_trusted_child(uri, mrenclave);
+            }
+            free(mrenclave);
+            free(uri);
         }
     }
     free(cfgbuf);

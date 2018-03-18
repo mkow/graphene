@@ -46,16 +46,16 @@ struct pal_internal_state pal_state;
 static void load_libraries (void)
 {
     /* we will not make any assumption for where the libraries are loaded */
-    char cfgbuf[CONFIG_MAX];
-    ssize_t len, ret = 0;
+    char* cfgbuf;
+    ssize_t ret = 0;
 
     /* loader.preload:
        any other libraries to preload. The can be multiple URIs,
        seperated by commas */
-    len = get_config(pal_state.root_config, "loader.preload", cfgbuf,
-                     CONFIG_MAX);
-    if (len <= 0)
+    if (get_config(pal_state.root_config, "loader.preload", &cfgbuf) < 0)
         return;
+
+    size_t len = strlen(cfgbuf);
 
     char * c = cfgbuf, * library_name = c;
     for (;; c++)
@@ -80,6 +80,7 @@ static void load_libraries (void)
 
             library_name = c + 1;
         }
+    free(cfgbuf);
 }
 
 static void read_environments (const char *** envpp)
@@ -145,21 +146,23 @@ static void read_environments (const char *** envpp)
     int prefix_len = static_strlen("loader.env.");
     const char ** ptr;
     free(cfgbuf);
-    cfgbuf = __alloca(sizeof(char) * CONFIG_MAX);
 
     for (int i = 0 ; i < nsetenvs ; i++) {
         const char * str = setenvs[i].str;
         int len = setenvs[i].len;
         int idx = setenvs[i].idx;
-        ssize_t bytes;
+        ssize_t cfgbuf_len;
         ptr = &envp[(idx == -1) ? nenvs++ : idx];
         memcpy(key + prefix_len, str, len + 1);
-        if ((bytes = get_config(store, key, cfgbuf, CONFIG_MAX)) > 0) {
-            char * e = malloc(len + bytes + 2);
+        if (get_config(store, key, &cfgbuf) >= 0) {
+            cfgbuf_len = strlen(cfgbuf);
+            char * e = malloc(len + cfgbuf_len + 2);
+            // TODO: check malloc result
             memcpy(e, str, len);
             e[len] = '=';
-            memcpy(e + len + 1, cfgbuf, bytes + 1);
+            memcpy(e + len + 1, cfgbuf, cfgbuf_len + 1);
             *ptr = e;
+            free(cfgbuf);
         } else {
             char * e = malloc(len + 2);
             memcpy(e, str, len);
@@ -174,38 +177,38 @@ static void read_environments (const char *** envpp)
 
 static void set_debug_type (void)
 {
-    char cfgbuf[CONFIG_MAX];
+    char* debug_type = NULL;
+    char* debug_file = NULL;
     ssize_t ret = 0;
 
     if (!pal_state.root_config)
         return;
 
-    ret = get_config(pal_state.root_config, "loader.debug_type",
-                     cfgbuf, CONFIG_MAX);
-    if (ret <= 0)
-        return;
+    ret = get_config(pal_state.root_config, "loader.debug_type", &debug_type);
+    if (ret < 0)
+        goto out;
 
     PAL_HANDLE handle = NULL;
 
-    if (strcmp_static(cfgbuf, "inline")) {
+    if (strcmp_static(debug_type, "inline")) {
         ret = _DkStreamOpen(&handle, "dev:tty", PAL_ACCESS_RDWR, 0, 0, 0);
         goto out;
     }
 
-    if (strcmp_static(cfgbuf, "file")) {
-        ret = get_config(pal_state.root_config, "loader.debug_file",
-                         cfgbuf, CONFIG_MAX);
-        if (ret <= 0)
+    if (strcmp_static(debug_type, "file")) {
+        ret = get_config(pal_state.root_config, "loader.debug_file", &debug_file);
+        if (ret < 0)
             init_fail(PAL_ERROR_INVAL, "debug file not specified");
 
-        ret = _DkStreamOpen(&handle, cfgbuf,
+
+        ret = _DkStreamOpen(&handle, debug_file,
                             PAL_ACCESS_RDWR,
                             PAL_SHARE_OWNER_R|PAL_SHARE_OWNER_W,
                             PAL_CREAT_TRY, 0);
         goto out;
     }
 
-    if (strcmp_static(cfgbuf, "none"))
+    if (strcmp_static(debug_type, "none"))
         goto out;
 
     init_fail(PAL_ERROR_INVAL, "unknown debug type");
@@ -214,6 +217,8 @@ out:
     if (ret < 0)
         init_fail(-ret, "cannot open debug stream");
 
+    free(debug_type);
+    free(debug_file);
     __pal_control.debug_stream = handle;
 }
 
@@ -349,14 +354,14 @@ has_manifest:
 
     /* if there is no executable, try to find one in the manifest */
     if (!exec_handle && pal_state.root_config) {
-        ret = get_config(pal_state.root_config, "loader.exec",
-                         uri_buf, URI_MAX);
-        if (ret > 0) {
-            exec_uri = malloc_copy(uri_buf, ret + 1);
+        char* exec_uri;
+        ret = get_config(pal_state.root_config, "loader.exec", &exec_uri);
+        if (ret >= 0) {
             ret = _DkStreamOpen(&exec_handle, exec_uri, PAL_ACCESS_RDONLY,
                                 0, 0, 0);
             if (ret < 0)
                 init_fail(-ret, "cannot open executable");
+            free(exec_uri);
         }
     }
 
@@ -408,11 +413,10 @@ has_manifest:
     arguments++;
 
     if (pal_state.root_config) {
-        char cfgbuf[CONFIG_MAX];
-        ret = get_config(pal_state.root_config, "loader.execname", cfgbuf,
-                         CONFIG_MAX);
-        if (ret > 0)
-            first_argument = malloc_copy(cfgbuf, ret + 1);
+        char* cfgbuf;
+        if (get_config(pal_state.root_config, "loader.execname", &cfgbuf) >= 0)
+            first_argument = cfgbuf;
+        // TODO: `first_argument` leaks from this function.
     }
 
     read_environments(&environments);

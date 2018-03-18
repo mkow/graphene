@@ -96,24 +96,26 @@ static bool mount_migrated = false;
 
 static int __mount_root (struct shim_dentry ** root)
 {
-    char type[CONFIG_MAX], uri[CONFIG_MAX];
+    char* type = NULL;
+    char* uri = NULL;
     int ret = 0;
 
     if (root_config &&
-            get_config(root_config, "fs.root.type", type, CONFIG_MAX) > 0 &&
-            get_config(root_config, "fs.root.uri", uri, CONFIG_MAX) > 0) {
+            get_config(root_config, "fs.root.type", &type) >= 0 &&
+            get_config(root_config, "fs.root.uri", &uri) >= 0) {
         debug("mounting root filesystem: %s from %s\n", type, uri);
         if ((ret = mount_fs(type, uri, "/", NULL, root, 0)) < 0) {
             debug("mounting root filesystem failed (%d)\n", ret);
-            return ret;
         }
-        return ret;
+    } else {
+        debug("mounting default root filesystem\n");
+        if ((ret = mount_fs("chroot", "file:", "/", NULL, root, 0)) < 0) {
+            debug("mounting root filesystem failed (%d)\n", ret);
+        }
     }
 
-    debug("mounting default root filesystem\n");
-    if ((ret = mount_fs("chroot", "file:", "/", NULL, root, 0)) < 0) {
-        debug("mounting root filesystem failed (%d)\n", ret);
-    }
+    free(uri);
+    free(type);
     return ret;
 }
 
@@ -146,41 +148,56 @@ static int __mount_sys (struct shim_dentry *root)
     return 0;
 }
 
-static int __mount_one_other (const char * key, int keylen)
+static int __mount_one_other (const char * mount_key, int keylen)
 {
     if (!root_config)
         return 0;
 
-    char k[CONFIG_MAX], p[CONFIG_MAX], u[CONFIG_MAX],
-         t[CONFIG_MAX];
-    char * uri = NULL;
-    int ret;
+    char key[CONFIG_MAX];
+    char* path = NULL;
+    char* type = NULL;
+    char* uri = NULL;
+    int ret = 0;
 
-    memcpy(k, "fs.mount.", 9);
-    memcpy(k + 9, key, keylen);
-    char * kp = k + 9 + keylen;
+    memcpy(key, "fs.mount.", 9);
+    memcpy(key + 9, mount_key, keylen);
+    char * key_end = key + 9 + keylen;
 
-    memcpy(kp, ".path", 6);
-    if (get_config(root_config, k, p, CONFIG_MAX) <= 0)
-        return -EINVAL;
-
-    memcpy(kp, ".type", 6);
-    if (get_config(root_config, k, t, CONFIG_MAX) <= 0)
-        return -EINVAL;
-
-    memcpy(kp, ".uri", 5);
-    if (get_config(root_config, k, u, CONFIG_MAX) > 0)
-        uri = u;
-
-    debug("mounting as %s filesystem: from %s to %s\n", t, uri, p);
-
-    if ((ret = mount_fs(t, uri, p, NULL, NULL, 1)) < 0) {
-        debug("mounting %s on %s (type=%s) failed (%e)\n", uri, p, t,
-              -ret);
-        return ret;
+    int pal_ret;
+    memcpy(key_end, ".path", 6);
+    if ((pal_ret = get_config(root_config, key, &path)) < 0) {
+        ret = -convert_pal_errno(-pal_ret);
+        goto out;
     }
 
-    return 0;
+    memcpy(key_end, ".type", 6);
+    if ((pal_ret = get_config(root_config, key, &type)) < 0) {
+        ret = -convert_pal_errno(-pal_ret);
+        goto out;
+    }
+
+    memcpy(key_end, ".uri", 5);
+    pal_ret = get_config(root_config, key, &uri);
+    if (pal_ret < 0 && pal_ret != PAL_ERROR_INVAL) {
+        // Failed for a reason other than a missing key.
+        ret = -convert_pal_errno(-pal_ret);
+        goto out;
+    }
+    // `uri` may be NULL now and this is ok.
+
+    debug("mounting as %s filesystem: from %s to %s\n", type, uri, path);
+
+    if ((ret = mount_fs(type, uri, path, NULL, NULL, 1)) < 0) {
+        debug("mounting %s on %s (type=%s) failed (%e)\n", uri, path, type,
+              -ret);
+        goto out;
+    }
+
+out:
+    free(uri);
+    free(type);
+    free(path);
+    return ret;
 }
 
 static int __mount_others (void)

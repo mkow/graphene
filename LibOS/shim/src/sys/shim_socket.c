@@ -72,11 +72,11 @@ static int init_port_rebase (void)
     if (rebase_on_lo != -1)
         return 0;
 
-    char cfg[CONFIG_MAX];
+    char* cfg = NULL;
     int rebase = 0;
 
     if (!root_config ||
-        get_config(root_config, "net.port.rebase_on_lo", cfg, CONFIG_MAX) <= 0) {
+            get_config(root_config, "net.port.rebase_on_lo", &cfg) < 0) {
         rebase_on_lo = 0;
         return 0;
     }
@@ -84,12 +84,14 @@ static int init_port_rebase (void)
     for (const char * p = cfg ; *p ; p++) {
         if (*p < '0' || *p > '9' || rebase > 32767) {
             rebase_on_lo = 0;
+            free(cfg);
             return 0;
         }
         rebase = rebase * 10 + (*p - '0');
     }
 
     rebase_on_lo = rebase;
+    free(cfg);
     return 0;
 }
 

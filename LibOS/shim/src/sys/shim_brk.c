@@ -65,10 +65,12 @@ int init_brk_region (void * brk_region)
         return 0;
 
     if (!brk_max_size) {
-        char brk_cfg[CONFIG_MAX];
+        char* brk_cfg;
         if (root_config &&
-            get_config(root_config, "sys.brk.size", brk_cfg, CONFIG_MAX) > 0)
+                get_config(root_config, "sys.brk.size", &brk_cfg) >= 0) {
             brk_max_size = parse_int(brk_cfg);
+            free(brk_cfg);
+        }
         if (!brk_max_size)
             brk_max_size = DEFAULT_BRK_MAX_SIZE;
     }

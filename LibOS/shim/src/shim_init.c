@@ -151,21 +151,20 @@ unsigned long parse_int (const char * str)
 
 long int glibc_option (const char * opt)
 {
-    char cfg[CONFIG_MAX];
+    if (!strcmp_static(opt, "heap_size"))
+        return -EINVAL;
 
-    if (strcmp_static(opt, "heap_size")) {
-        ssize_t ret = get_config(root_config, "glibc.heap_size", cfg, CONFIG_MAX);
-        if (ret <= 0) {
-            debug("no glibc option: %s (err=%d)\n", opt, ret);
-            return -ENOENT;
-        }
-
-        long int heap_size = parse_int(cfg);
-        debug("glibc option: heap_size = %ld\n", heap_size);
-        return (long int) heap_size;
+    char* cfg;
+    int ret = get_config(root_config, "glibc.heap_size", &cfg);
+    if (ret < 0) {
+        debug("can't read glibc option: %s (err=%d)\n", opt, ret);
+        return convert_pal_errno(ret);
     }
 
-    return -EINVAL;
+    long int heap_size = parse_int(cfg);
+    debug("glibc option: heap_size = %ld\n", heap_size);
+    free(cfg);
+    return heap_size;
 }
 
 void * migrated_memory_start;
@@ -351,10 +350,11 @@ int init_stack (const char ** argv, const char ** envp, const char *** argpp,
     if (!sys_stack_size) {
         sys_stack_size = DEFAULT_SYS_STACK_SIZE;
         if (root_config) {
-            char stack_cfg[CONFIG_MAX];
-            if (get_config(root_config, "sys.stack.size", stack_cfg,
-                           CONFIG_MAX) > 0)
+            char* stack_cfg;
+            if (get_config(root_config, "sys.stack.size", &stack_cfg) >= 0) {
                 sys_stack_size = ALIGN_UP(parse_int(stack_cfg));
+                free(stack_cfg);
+            }
         }
     }
 

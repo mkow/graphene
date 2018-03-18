@@ -259,16 +259,17 @@ int initialize_enclave (struct pal_enclave * enclave)
         goto err;
     }
 
-    char cfgbuf[CONFIG_MAX];
+    char* cfgbuf;
 
     /* Reading sgx.enclave_size from manifest */
-    if (get_config(enclave->config, "sgx.enclave_size", cfgbuf, CONFIG_MAX) <= 0) {
+    if (get_config(enclave->config, "sgx.enclave_size", &cfgbuf) < 0) {
         SGX_DBG(DBG_E, "enclave_size is not specified\n");
         ret = -EINVAL;
         goto err;
     }
 
     enclave->size = parse_int(cfgbuf);
+    free(cfgbuf);
 
     /* DEP 1/21/17: SGX currently only supports power-of-two enclaves.
      * Give users a better warning about this. */
@@ -279,8 +280,9 @@ int initialize_enclave (struct pal_enclave * enclave)
     }
 
     /* Reading sgx.thread_num from manifest */
-    if (get_config(enclave->config, "sgx.thread_num", cfgbuf, CONFIG_MAX) > 0)
+    if (get_config(enclave->config, "sgx.thread_num", &cfgbuf) >= 0)
         enclave->thread_num = parse_int(cfgbuf);
+    free(cfgbuf);
 
     if (enclave_thread_num > MAX_DBG_THREADS) {
         SGX_DBG(DBG_E, "Too many threads to debug\n");
@@ -289,11 +291,12 @@ int initialize_enclave (struct pal_enclave * enclave)
     }
 
     /* Reading sgx.static_address from manifest */
-    if (get_config(enclave->config, "sgx.static_address", cfgbuf, CONFIG_MAX) > 0 &&
+    if (get_config(enclave->config, "sgx.static_address", &cfgbuf) >= 0 &&
         cfgbuf[0] == '1')
         enclave->baseaddr = heap_min;
     else
         enclave->baseaddr = heap_min = 0;
+    free(cfgbuf);
 
     TRY(read_enclave_token, enclave->token, &enclave_token);
     TRY(read_enclave_sigstruct, enclave->sigfile, &enclave_sigstruct);
@@ -712,12 +715,15 @@ static int load_enclave (struct pal_enclave * enclave,
     }
 
     if (exec_uri == NULL) {
-        if (get_config(enclave->config, "loader.exec", cfgbuf, CONFIG_MAX) > 0) {
-            exec_uri = resolve_uri(cfgbuf, &errstring);
+        char* loader_exec;
+        if (get_config(enclave->config, "loader.exec", &loader_exec) >= 0) {
+            exec_uri = resolve_uri(loader_exec, &errstring);
             if (!exec_uri) {
-                SGX_DBG(DBG_E, "%s: %s\n", errstring, cfgbuf);
+                SGX_DBG(DBG_E, "%s: %s\n", errstring, loader_exec);
+                free(loader_exec);
                 return -EINVAL;
             }
+            free(loader_exec);
         }
     }
 
@@ -733,16 +739,19 @@ static int load_enclave (struct pal_enclave * enclave,
         enclave->exec = -1;
     }
 
-    if (get_config(enclave->config, "sgx.sigfile", cfgbuf, CONFIG_MAX) < 0) {
+    char* sgx_sigfile;
+    if (get_config(enclave->config, "sgx.sigfile", &sgx_sigfile) < 0) {
         SGX_DBG(DBG_E, "sigstruct file not found. Must have \'sgx.sigfile\' in the manifest\n");
         return -EINVAL;
     }
 
-    const char * uri = resolve_uri(cfgbuf, &errstring);
+    const char * uri = resolve_uri(sgx_sigfile, &errstring);
     if (!uri) {
-        SGX_DBG(DBG_E, "%s: %s\n", errstring, cfgbuf);
+        SGX_DBG(DBG_E, "%s: %s\n", errstring, sgx_sigfile);
+        free(sgx_sigfile);
         return -EINVAL;
     }
+    free(sgx_sigfile);
 
     if (!strcmp_static(uri + strlen(uri) - 4, ".sig")) {
         SGX_DBG(DBG_E, "Invalid sigstruct file URI as %s\n", cfgbuf);
