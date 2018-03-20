@@ -116,8 +116,8 @@ int get_fs_paths (struct config_store * config, const char *** paths)
     ssize_t cfgsize;
 
     cfgsize = get_config_entries_size(config, "fs.mount");
-    if (cfgsize)
-        return 0;
+    if (cfgsize <= 0)
+        return cfgsize;
 
     keys = __alloca(cfgsize);
     if ((nkeys = get_config_entries(config, "fs.mount", keys, cfgsize)) < 0)
