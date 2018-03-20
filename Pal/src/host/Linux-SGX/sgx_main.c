@@ -699,8 +699,6 @@ static int load_enclave (struct pal_enclave * enclave,
     }
 #endif
 
-    char cfgbuf[CONFIG_MAX];
-
     enclave->manifest = INLINE_SYSCALL(open, 3, manifest_uri + 5,
                                        O_RDONLY|O_CLOEXEC, 0);
     if (IS_ERR(enclave->manifest)) {
@@ -754,7 +752,7 @@ static int load_enclave (struct pal_enclave * enclave,
     free(sgx_sigfile);
 
     if (!strcmp_static(uri + strlen(uri) - 4, ".sig")) {
-        SGX_DBG(DBG_E, "Invalid sigstruct file URI as %s\n", cfgbuf);
+        SGX_DBG(DBG_E, "Invalid sigstruct file URI as %s\n", uri);
         return -EINVAL;
     }
 

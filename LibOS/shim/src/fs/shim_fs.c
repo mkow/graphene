@@ -153,15 +153,24 @@ static int __mount_one_other (const char * mount_key, int keylen)
     if (!root_config)
         return 0;
 
-    char key[CONFIG_MAX];
+    char* key;
     char* path = NULL;
     char* type = NULL;
     char* uri = NULL;
     int ret = 0;
 
-    memcpy(key, "fs.mount.", 9);
-    memcpy(key + 9, mount_key, keylen);
-    char * key_end = key + 9 + keylen;
+    const char* const PREFIX = "fs.mount.";
+    const size_t PREFIX_LEN = strlen(PREFIX);
+
+    key = malloc(PREFIX_LEN + keylen + 6);  // 6 is for the hardcoded subkeys.
+    if (!key) {
+        ret = -ENOMEM;
+        goto out;
+    }
+
+    memcpy(key, PREFIX, PREFIX_LEN);
+    memcpy(key + PREFIX_LEN, mount_key, keylen);
+    char * key_end = key + PREFIX_LEN + keylen;
 
     int pal_ret;
     memcpy(key_end, ".path", 6);
@@ -194,6 +203,7 @@ static int __mount_one_other (const char * mount_key, int keylen)
     }
 
 out:
+    free(key);
     free(uri);
     free(type);
     free(path);

@@ -111,7 +111,9 @@ out:
 
 int get_fs_paths (struct config_store * config, const char *** paths)
 {
-    char * keys;
+    int ret = 0;
+    char* key = NULL;
+    char* keys = NULL;
     int nkeys;
     ssize_t cfgsize;
 
@@ -119,13 +121,20 @@ int get_fs_paths (struct config_store * config, const char *** paths)
     if (cfgsize <= 0)
         return cfgsize;
 
-    keys = __alloca(cfgsize);
-    if ((nkeys = get_config_entries(config, "fs.mount", keys, cfgsize)) < 0)
-        nkeys = 0;
+    keys = malloc(cfgsize);
+    if (!keys)
+        return -PAL_ERROR_NOMEM;
+
+    if ((nkeys = get_config_entries(config, "fs.mount", keys, cfgsize)) < 0) {
+        ret = nkeys;
+        goto out;
+    }
 
     *paths = malloc(sizeof(const char *) * (1 + nkeys));
-    if (!(*paths))
-        return -ENOMEM;
+    if (!*paths) {
+        ret = -PAL_ERROR_NOMEM;
+        goto out;
+    }
 
     (*paths)[0] = ".";
     int npaths = 1;
@@ -133,23 +142,48 @@ int get_fs_paths (struct config_store * config, const char *** paths)
     if (!nkeys)
         goto out;
 
-    char key[CONFIG_MAX], * k = keys, * n;
-    char * tmp;
+    const char* const PREFIX = "fs.mount.";
+    const size_t PREFIX_LEN = static_strlen(PREFIX);
+    const char* const SUFFIX = ".uri";
+    const size_t SUFFIX_LEN = static_strlen(SUFFIX);
 
-    tmp = strcpy_static(key, "fs.mount.", CONFIG_MAX);
-
-    for (int i = 0 ; i < nkeys ; i++) {
+    char* n;
+    char* k = keys;
+    // Allocate enough space for the key string.
+    size_t max_key_size = 0;
+    for (size_t i = 0 ; i < nkeys ; i++) {
+        size_t len = PREFIX_LEN + (n - k) + SUFFIX_LEN + 1;
         for (n = k ; *n ; n++);
-        int len = n - k;
-        memcpy(tmp, k, len);
-        strcpy_static(tmp + len, ".uri", (key + CONFIG_MAX) - (tmp + len));
+        if (len > max_key_size)
+            max_key_size = len;
+        k = n + 1;
+    }
+    key = malloc(max_key_size);
+    if (!key) {
+        ret = -PAL_ERROR_NOMEM;
+        goto out;
+    }
+
+    k = keys;
+
+    strcpy_static(key, PREFIX, max_key_size);
+
+    for (size_t i = 0 ; i < nkeys ; i++) {
+        for (n = k ; *n ; n++);
+        size_t len = n - k;
+        memcpy(key + PREFIX_LEN, k, len);
+        strcpy_static(key + PREFIX_LEN + len,
+                      SUFFIX, max_key_size - PREFIX_LEN - len);
 
         const char * path = __get_path(config, key);
         if (path)
             (*paths)[npaths++] = path;
         k = n + 1;
     }
+
 out:
+    free(key);
+    free(keys);
     return npaths;
 }
 

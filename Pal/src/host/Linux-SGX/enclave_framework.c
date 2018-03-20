@@ -459,7 +459,7 @@ int init_trusted_files (void)
     struct config_store * store = pal_state.root_config;
     char * cfgbuf = NULL;
     ssize_t cfgsize;
-    int nuris, ret;
+    int uris_cnt, ret;
 
     if (pal_sec.exec_fd != PAL_IDX_POISON) {
         ret = init_trusted_file("exec", pal_sec.exec_name);
@@ -500,8 +500,8 @@ int init_trusted_files (void)
     }
 
 
-    nuris = get_config_entries(store, "sgx.trusted_files", cfgbuf, cfgsize);
-    if (nuris <= 0)
+    uris_cnt = get_config_entries(store, "sgx.trusted_files", cfgbuf, cfgsize);
+    if (uris_cnt <= 0)
         goto no_trusted;
 
     {
@@ -510,7 +510,7 @@ int init_trusted_files (void)
 
         tmp = strcpy_static(key, "sgx.trusted_files.", CONFIG_MAX);
 
-        for (int i = 0 ; i < nuris ; i++) {
+        for (int i = 0 ; i < uris_cnt ; i++) {
             size_t len = strlen(k);
             memcpy(tmp, k, len + 1);
             k += len + 1;
@@ -537,8 +537,8 @@ no_trusted:
         goto out;
     }
 
-    nuris = get_config_entries(store, "sgx.allowed_files", cfgbuf, cfgsize);
-    if (nuris <= 0)
+    uris_cnt = get_config_entries(store, "sgx.allowed_files", cfgbuf, cfgsize);
+    if (uris_cnt <= 0)
         goto no_allowed;
 
     {
@@ -548,7 +548,7 @@ no_trusted:
 
         tmp = strcpy_static(key, "sgx.allowed_files.", CONFIG_MAX);
 
-        for (int i = 0 ; i < nuris ; i++) {
+        for (int i = 0 ; i < uris_cnt ; i++) {
             size_t len = strlen(k);
             memcpy(tmp, k, len + 1);
             k += len + 1;
@@ -591,11 +591,11 @@ int init_trusted_children (void)
     if (!cfgbuf)
         return -PAL_ERROR_NOMEM;
 
-    int nuris = get_config_entries(store, "sgx.trusted_mrenclave",
-                                   cfgbuf, cfgsize);
-    if (nuris > 0) {
+    int uris_cnt = get_config_entries(store, "sgx.trusted_mrenclave",
+                                      cfgbuf, cfgsize);
+    if (uris_cnt > 0) {
         char * k = cfgbuf;
-        for (int i = 0 ; i < nuris ; i++) {
+        for (int i = 0 ; i < uris_cnt ; i++) {
             int len = strlen(k);
             memcpy(tmp1, k, len + 1);
             memcpy(tmp2, k, len + 1);
