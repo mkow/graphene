@@ -497,16 +497,26 @@ static int __write_config (void * f, int (*write) (void *, void *, int),
     struct config * e;
     int ret;
     char * buf = NULL;
-    int bufsz = 0;
+    size_t bufsz = 0;
 
-    listp_for_each_entry(e, root, siblings)
+    // Allocate large enough buffer.
+    listp_for_each_entry(e, root, siblings) {
         if (e->val) {
-            int total = klen + e->klen + e->vlen + 2;
+            size_t total = klen + e->klen + e->vlen + 2;
+            if (total > bufsz)
+                bufsz = total;
+        }
+    }
+    buf = malloc(bufsz);
+    if (!buf) {
+        ret = -PAL_ERROR_NOMEM;
+        goto out;
+    }
 
-            while (total > bufsz) {
-                bufsz += CONFIG_MAX;
-                buf = __alloca(CONFIG_MAX);
-            }
+    listp_for_each_entry(e, root, siblings) {
+        if (e->val) {
+            // This calculation has to match the one used for the allocation.
+            size_t total = klen + e->klen + e->vlen + 2;
 
             memcpy(buf, keybuf, klen);
             memcpy(buf + klen, e->key, e->klen);
@@ -516,22 +526,27 @@ static int __write_config (void * f, int (*write) (void *, void *, int),
 
             ret = write(f, buf, total);
             if (ret < 0)
-                return ret;
+                goto out;
 
             *offset += total;
         } else {
-            if (klen + e->klen + 1 > CONFIG_MAX)
-                return -PAL_ERROR_TOOLONG;
+            if (klen + e->klen + 1 > CONFIG_MAX) {
+                ret = -PAL_ERROR_TOOLONG;
+                goto out;
+            }
 
             memcpy(keybuf + klen, e->key, e->klen);
             keybuf[klen + e->klen] = '.';
 
             if ((ret = __write_config(f, write, store, &e->children, keybuf,
                                       klen + e->klen + 1, offset)) < 0)
-                return ret;
+                goto out;
         }
+    }
 
-    return 0;
+out:
+    free(buf);
+    return ret;
 }
 
 int write_config (void * f, int (*write) (void *, void *, int),
