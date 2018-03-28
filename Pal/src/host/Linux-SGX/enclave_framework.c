@@ -1,6 +1,8 @@
 /* -*- mode:c; c-file-style:"k&r"; c-basic-offset: 4; tab-width:4; indent-tabs-mode:nil; mode:auto-fill; fill-column:78; -*- */
 /* vim: set ts=4 sw=4 et tw=78 fo=cqt wm=0: */
 
+#include <stdbool.h>
+
 #include <pal_linux.h>
 #include <pal_internal.h>
 #include <pal_debug.h>
@@ -121,7 +123,7 @@ DEFINE_LISTP(trusted_file);
 static LISTP_TYPE(trusted_file) trusted_file_list = LISTP_INIT;
 static struct spinlock trusted_file_lock = LOCK_INIT;
 static int trusted_file_indexes = 0;
-static int allow_file_creation = 0;
+static bool allow_file_creation = false;
 
 
 /* Function: load_trusted_file
@@ -564,9 +566,9 @@ no_allowed:
 
     free(cfgbuf);
     if (get_config(store, "sgx.allow_file_creation", &cfgbuf) < 0) {
-        allow_file_creation = 0;
+        allow_file_creation = false;
     } else {
-        allow_file_creation = 1;
+        allow_file_creation = true;
     }
 
 out:
