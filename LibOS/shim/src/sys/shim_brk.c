@@ -119,10 +119,10 @@ int init_brk_region (void * brk_region)
     void * end_brk_region = NULL;
 
     /* Allocate the whole brk region */
-    brk_region = (void *) DkVirtualMemoryAlloc(brk_region, brk_max_size, 0,
-                                    PAL_PROT_READ|PAL_PROT_WRITE);
+    void* dk_ret = (void *) DkVirtualMemoryAlloc(brk_region, brk_max_size, 0,
+                                                 PAL_PROT_READ|PAL_PROT_WRITE);
 
-    if (!brk_region) {
+    if (!dk_ret) {
         bkeep_munmap(brk_region, brk_max_size, flags);
         return -ENOMEM;
     }
@@ -178,7 +178,11 @@ int reset_brk (void)
 void * shim_do_brk (void * brk)
 {
     master_lock();
-    init_brk_region(NULL);
+    if (init_brk_region(NULL) < 0) {
+        debug("Failed to initialize brk!\n");
+        brk = NULL;
+        goto out;
+    }
 
     if (!brk) {
 unchanged:
