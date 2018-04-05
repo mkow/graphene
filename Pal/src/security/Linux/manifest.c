@@ -13,10 +13,11 @@
 # include "pal_internal.h"
 # include "pal_linux.h"
 # include "pal_debug.h"
-# include "pal_error.h"
 #else
 # include "internal.h"
 #endif
+
+#include "pal_error.h"
 
 #include "graphene.h"
 #include "pal_security.h"
@@ -127,13 +128,13 @@ int get_fs_paths (struct config_store * config, const char *** paths)
 
     if ((nkeys = get_config_entries(config, "fs.mount", keys, cfgsize)) < 0) {
         ret = nkeys;
-        goto out;
+        goto err_out;
     }
 
     *paths = malloc(sizeof(const char *) * (1 + nkeys));
     if (!*paths) {
         ret = -PAL_ERROR_NOMEM;
-        goto out;
+        goto err_out;
     }
 
     (*paths)[0] = ".";
@@ -143,17 +144,17 @@ int get_fs_paths (struct config_store * config, const char *** paths)
         goto out;
 
     const char* const PREFIX = "fs.mount.";
-    const size_t PREFIX_LEN = static_strlen(PREFIX);
+    const size_t PREFIX_LEN = strlen(PREFIX);
     const char* const SUFFIX = ".uri";
-    const size_t SUFFIX_LEN = static_strlen(SUFFIX);
+    const size_t SUFFIX_LEN = strlen(SUFFIX);
 
     char* n;
     char* k = keys;
     // Allocate enough space for the key string.
     size_t max_key_size = 0;
     for (size_t i = 0 ; i < nkeys ; i++) {
-        size_t len = PREFIX_LEN + (n - k) + SUFFIX_LEN + 1;
         for (n = k ; *n ; n++);
+        size_t len = PREFIX_LEN + (n - k) + SUFFIX_LEN + 1;
         if (len > max_key_size)
             max_key_size = len;
         k = n + 1;
@@ -161,19 +162,19 @@ int get_fs_paths (struct config_store * config, const char *** paths)
     key = malloc(max_key_size);
     if (!key) {
         ret = -PAL_ERROR_NOMEM;
-        goto out;
+        goto err_out;
     }
 
     k = keys;
 
-    strcpy_static(key, PREFIX, max_key_size);
+    memcpy(key, PREFIX, PREFIX_LEN);
 
     for (size_t i = 0 ; i < nkeys ; i++) {
         for (n = k ; *n ; n++);
         size_t len = n - k;
         memcpy(key + PREFIX_LEN, k, len);
-        strcpy_static(key + PREFIX_LEN + len,
-                      SUFFIX, max_key_size - PREFIX_LEN - len);
+        memcpy(key + PREFIX_LEN + len,
+               SUFFIX, SUFFIX_LEN + 1);
 
         const char * path = __get_path(config, key);
         if (path)
@@ -182,9 +183,11 @@ int get_fs_paths (struct config_store * config, const char *** paths)
     }
 
 out:
+    ret = npaths;
+err_out:
     free(key);
     free(keys);
-    return npaths;
+    return ret;
 }
 
 int get_net_rules (struct config_store * config,

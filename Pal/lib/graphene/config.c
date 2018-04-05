@@ -495,7 +495,7 @@ static int __write_config (void * f, int (*write) (void *, void *, int),
                            unsigned long * offset)
 {
     struct config * e;
-    int ret;
+    int ret = 0;
     char * buf = NULL;
     size_t bufsz = 0;
 
