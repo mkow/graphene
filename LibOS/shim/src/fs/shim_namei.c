@@ -294,6 +294,7 @@ int __path_lookupat (struct shim_dentry * start, const char * path, int flags,
         fs = start->fs;
     assert(fs);
     get_mount(fs);
+    debug("__path_lookupat: start->name.name=%s path=%s\n", start->name.name, path);
     assert(start->state & DENTRY_ISDIRECTORY);
 
     // Peel off any preceeding slashes

@@ -339,6 +339,8 @@ static int register_trusted_file (const char * uri, const char * checksum_str)
     int uri_len = strlen(uri);
     int ret;
 
+    SGX_DBG(DBG_E, "Registering %s\n", uri);
+
     _DkSpinLock(&trusted_file_lock);
 
     listp_for_each_entry(tf, &trusted_file_list, list) {
