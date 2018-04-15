@@ -9,6 +9,8 @@ targets += pack
 endif
 
 .PHONY: $(targets)
-$(targets): src test
+$(targets):
+	#src
+	#test
 	make $@ -C src
-	make $@ -C test
+	#make $@ -C test

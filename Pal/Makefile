@@ -12,7 +12,8 @@ ifeq ($(OS),Linux)
 	LINUX_KERNEL := $(LINUX_SRC)/arch/x86/boot/bzImage
 endif
 
-DIRS = src test regression
+DIRS = src
+#test regression
 
 .PHONY: all clean
 all clean:
