@@ -1,3 +1,6 @@
+.PHONY: default
+default: all
+
 include src/Makefile.Host
 
 ifeq ($(OS),Linux)
@@ -12,14 +15,10 @@ ifeq ($(OS),Linux)
 	LINUX_KERNEL := $(LINUX_SRC)/arch/x86/boot/bzImage
 endif
 
-DIRS = src test regression
-
+# `all` target doesn't build tests.
 .PHONY: all clean
 all clean:
-	for d in $(DIRS); \
-	do \
-		$(MAKE) -C $$d $@ || exit $?; \
-	done
+	$(MAKE) -C src $@
 
 .PHONY: linux-kernel
 linux-kernel: $(LINUX_KERNEL)
@@ -58,6 +57,10 @@ endif
 .PHONY: test
 test:
 	$(MAKE) -C test test
+
+.PHONY: regression
+regression:
+	$(MAKE) -C regression
 
 .PHONY: pack
 pack:
