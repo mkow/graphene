@@ -480,6 +480,7 @@ void sysparser_printf (const char * fmt, ...)
 
 void parse_syscall_before (int sysno, const char * name, int nr, ...)
 {
+    return;
     if (!debug_handle)
         return;
 
@@ -515,6 +516,7 @@ dotdotdot:
 
 void parse_syscall_after (int sysno, const char * name, int nr, ...)
 {
+    return;
     if (!debug_handle)
         return;
 

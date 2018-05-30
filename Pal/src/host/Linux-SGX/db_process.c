@@ -116,7 +116,7 @@ int register_trusted_child(const char * uri, const char * mrenclave_str)
         return -PAL_ERROR_INVAL;
     }
 
-    SGX_DBG(DBG_S, "trusted: %s %s\n", mrenclave_text, new->uri);
+    // SGX_DBG(DBG_S, "trusted: %s %s\n", mrenclave_text, new->uri);
 
     _DkSpinLock(&trusted_children_lock);
 

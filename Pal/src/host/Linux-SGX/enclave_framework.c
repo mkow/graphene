@@ -339,7 +339,7 @@ static int register_trusted_file (const char * uri, const char * checksum_str)
     int uri_len = strlen(uri);
     int ret;
 
-    SGX_DBG(DBG_E, "Registering %s\n", uri);
+    // SGX_DBG(DBG_E, "Registering %s\n", uri);
 
     _DkSpinLock(&trusted_file_lock);
 
@@ -406,12 +406,12 @@ static int register_trusted_file (const char * uri, const char * checksum_str)
         }
 
         new->index = (++trusted_file_indexes);
-        SGX_DBG(DBG_S, "trusted: [%d] %s %s\n", new->index,
-                checksum_text, new->uri);
+        // SGX_DBG(DBG_S, "trusted: [%d] %s %s\n", new->index,
+                // checksum_text, new->uri);
     } else {
         memset(&new->checksum, 0, sizeof(sgx_checksum_t));
         new->index = 0;
-        SGX_DBG(DBG_S, "allowed: %s\n", new->uri);
+        // SGX_DBG(DBG_S, "allowed: %s\n", new->uri);
     }
 
     _DkSpinLock(&trusted_file_lock);

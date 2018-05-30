@@ -426,10 +426,10 @@ def generate_measurement(attr, areas):
         if measured:
             desc += ' measured'
 
-        if size == PAGESIZE:
-            print >>sys.stderr, "    %016x [%s:%s] %s" % (addr, type, prot, desc)
-        else:
-            print >>sys.stderr, "    %016x-%016lx [%s:%s] %s" % (addr, addr + size, type, prot, desc)
+        # if size == PAGESIZE:
+        #     print >>sys.stderr, "    %016x [%s:%s] %s" % (addr, type, prot, desc)
+        # else:
+        #     print >>sys.stderr, "    %016x-%016lx [%s:%s] %s" % (addr, addr + size, type, prot, desc)
 
     def load_file(digest, f, offset, addr, filesize, memsize, desc, flags):
         f_addr = rounddown(offset)
@@ -437,9 +437,9 @@ def generate_measurement(attr, areas):
         f_size = roundup(offset + filesize) - f_addr
         m_size = roundup(addr + memsize) - m_addr
 
-        print_area(m_addr, f_size, flags, desc, True)
-        if f_size < m_size:
-            print_area(m_addr + f_size, m_size - f_size, flags, "bss", False)
+        # print_area(m_addr, f_size, flags, desc, True)
+        # if f_size < m_size:
+            # print_area(m_addr + f_size, m_size - f_size, flags, "bss", False)
 
         for pg in range(m_addr, m_addr + m_size, PAGESIZE):
             do_eadd(digest, pg, flags)
@@ -507,7 +507,7 @@ def generate_measurement(attr, areas):
         else:
             for a in range(area.addr, area.addr + area.size, PAGESIZE):
                 do_eadd(mrenclave, a, area.flags)
-            print_area(area.addr, area.size, area.flags, area.desc, False)
+            # print_area(area.addr, area.size, area.flags, area.desc, False)
 
     return mrenclave.finalize()
 
@@ -716,16 +716,16 @@ if __name__ == "__main__":
     print >>sys.stderr, "    miscs:     %08x"  % (bytes_to_int(attr['miscs']))
 
     # Get trusted checksums and measurements
-    print >>sys.stderr, "Trusted files:"
+    # print >>sys.stderr, "Trusted files:"
     for key, val in get_trusted_files(manifest, args).items():
         (uri, target, checksum) = val
-        print >>sys.stderr, "    %s %s" % (checksum, uri)
+        # print >>sys.stderr, "    %s %s" % (checksum, uri)
         manifest['sgx.trusted_checksum.' + key] = checksum
 
-    print >>sys.stderr, "Trusted children:"
+    # print >>sys.stderr, "Trusted children:"
     for key, val in get_trusted_children(manifest, args).items():
         (uri, target, mrenclave) = val
-        print >>sys.stderr, "    %s %s" % (mrenclave, uri)
+        # print >>sys.stderr, "    %s %s" % (mrenclave, uri)
         manifest['sgx.trusted_mrenclave.' + key] = mrenclave
 
     # Try populate memory areas
@@ -747,7 +747,7 @@ if __name__ == "__main__":
 
     memory_areas = populate_memory_areas(manifest, attr, memory_areas)
 
-    print >>sys.stderr, "Memory:"
+    # print >>sys.stderr, "Memory:"
     # Generate measurement
     mrenclave = generate_measurement(attr, memory_areas)
 
