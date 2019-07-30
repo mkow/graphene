@@ -99,7 +99,7 @@ new file mode 100644
 index 0000000..3211637
 --- /dev/null
 +++ b/libos/Versions
-@@ -0,0 +1,8 @@
+@@ -0,0 +1,7 @@
 +liblibos {
 +  GLIBC_2.12 {
 +    checkpoint;
@@ -112,7 +112,7 @@ new file mode 100644
 index 0000000..8785629
 --- /dev/null
 +++ b/libos/wrapper.c
-@@ -0,0 +1,62 @@
+@@ -0,0 +1,41 @@
 +#include <errno.h>
 +#include <kernel-features.h>
 +#include <shim_unistd.h>
