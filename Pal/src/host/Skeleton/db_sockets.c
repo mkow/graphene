@@ -106,10 +106,10 @@ static int udp_open (PAL_HANDLE *hdl, const char * type, const char * uri,
 
     memcpy(buf, uri, len + 1);
 
-    if (strcmp_static(type, "udp.srv"))
+    if (!strcmp_static(type, "udp.srv"))
         return udp_bind(hdl, buf, create);
 
-    if (strcmp_static(type, "udp"))
+    if (!strcmp_static(type, "udp"))
         return udp_connect(hdl, buf);
 
     return -PAL_ERROR_NOTSUPPORT;
