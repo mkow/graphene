@@ -62,7 +62,7 @@ __asm__ (".pushsection \".debug_gdb_scripts\", \"MS\",@progbits,1\r\n"
 struct pal_linux_state linux_state;
 struct pal_sec pal_sec;
 
-static int pagesz = PRESET_PAGESIZE;
+static size_t pagesz = PRESET_PAGESIZE;
 static int uid, gid;
 #if USE_VDSO_GETTIME == 1
 static ElfW(Addr) sysinfo_ehdr;

@@ -45,7 +45,7 @@
 struct pal_linux_state linux_state;
 struct pal_sec pal_sec;
 
-unsigned int pagesz = PRESET_PAGESIZE;
+size_t pagesz = PRESET_PAGESIZE;
 
 unsigned long _DkGetPagesize (void)
 {

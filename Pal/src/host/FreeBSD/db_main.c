@@ -55,7 +55,7 @@ asm (".global pal_start \n"
 struct pal_bsd_state bsd_state;
 struct pal_sec pal_sec;
 
-static int pagesz = PRESET_PAGESIZE;
+static size_t pagesz = PRESET_PAGESIZE;
 static uid_t uid;
 static gid_t gid;
 

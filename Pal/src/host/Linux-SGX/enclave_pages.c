@@ -8,7 +8,7 @@
 
 #include <stdint.h>
 
-static unsigned long pgsz = PRESET_PAGESIZE;
+static size_t pgsz = PRESET_PAGESIZE;
 void * heap_base;
 static uint64_t heap_size;
 
