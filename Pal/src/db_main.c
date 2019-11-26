@@ -233,7 +233,6 @@ noreturn void pal_main (
 #endif
 
     pal_state.instance_id = instance_id;
-    pal_state.alloc_align = _DkGetPagesize();
     pal_state.alloc_align = _DkGetAllocationAlignment();
     assert(IS_POWER_OF_2(pal_state.alloc_align));
 
