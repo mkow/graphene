@@ -39,7 +39,7 @@ void* shim_do_mmap(void* addr, size_t length, int prot, int flags, int fd, off_t
     long ret                = 0;
 
     if (length == 67108864 || length == 134217728) {
-        debug("XXXXX\n");
+        while(1);
     }
 
     /*
