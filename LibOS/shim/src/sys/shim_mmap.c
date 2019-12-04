@@ -38,6 +38,10 @@ void* shim_do_mmap(void* addr, size_t length, int prot, int flags, int fd, off_t
     struct shim_handle* hdl = NULL;
     long ret                = 0;
 
+    if (length == 67108864 || length == 134217728) {
+        debug("XXXXX\n");
+    }
+
     /*
      * According to the manpage, both addr and offset have to be page-aligned,
      * but not the length. mmap() will automatically round up the length.
