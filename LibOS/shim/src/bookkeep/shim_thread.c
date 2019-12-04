@@ -471,14 +471,18 @@ int check_last_thread (struct shim_thread * self)
     /* find out if there is any thread that is
        1) no current thread 2) in current vm
        3) still alive */
+    debug("check_last_thread list: (self: %p, self->tid: %d)\n", self, self ? self->tid : 0);
     LISTP_FOR_EACH_ENTRY(tmp, &thread_list, list) {
+        debug("\ttid: %d, in_vm: %d, is_alive: %d\n", tmp->tid, tmp->in_vm, tmp->is_alive);
         if (tmp->tid &&
             (!self || tmp->tid != self->tid) && tmp->in_vm && tmp->is_alive) {
+            debug("\t<list end>\n");
             debug("check_last_thread: thread %d is alive\n", tmp->tid);
             unlock(&thread_list_lock);
             return tmp->tid;
         }
     }
+    debug("\t<list end>\n");
 
     debug("this is the only thread %d\n", self->tid);
     unlock(&thread_list_lock);
