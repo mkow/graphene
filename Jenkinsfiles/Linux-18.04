@@ -42,7 +42,7 @@ pipeline {
                             make test
                             '''
                         sh '''
-                            cd LibOS/shim/
+                            cd LibOS/shim/test/ltp
                             make
                             make ltp.xml
                             '''

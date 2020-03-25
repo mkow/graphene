@@ -88,7 +88,6 @@ the process status of :command:`aesm_service`.
 
 8. Test LMBench Application::
 
-      cd $GRAPHENE_DIR
       cd $GRAPHENE_DIR/Examples/lmbench
       make SGX=1
       cd lmbench-2.5/bin/linux
