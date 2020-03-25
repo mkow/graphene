@@ -105,7 +105,8 @@ class Diff:
         except KeyError:
             return False
 
-    def message_is_important(self, message):
+    @staticmethod
+    def message_is_important(message):
         path = pathlib.Path(message['path'])
         for i in THE_BIG_LIST_OF_NAUGHTY_FILES:
             try:
