@@ -10,7 +10,7 @@ Contributing to Graphene
 First off, thank you for your interest in contributing to Graphene!
 
 In general, code contributions should be submitted to the Graphene project
-using `a |nbsp| pull request <https://github.com/oscarlab/graphene/pulls>`__.
+using a |nbsp| `pull request <https://github.com/oscarlab/graphene/pulls>`__.
 
 Reporting Bugs
 --------------
