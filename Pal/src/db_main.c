@@ -385,27 +385,27 @@ noreturn void pal_main (
     } else {
         // Load argv from a file and discard cmdline argv. We trust the file contents (this can be
         // achieved using protected or trusted files).
-        if (get_config(pal_state.root_config, "loader.argv_src_filename",
+        if (get_config(pal_state.root_config, "loader.argv_src_file",
                        cfgbuf, CONFIG_MAX) <= 0) {
-            init_fail(PAL_ERROR_INVAL, "loader.argv_src_filename not specified");
+            INIT_FAIL(PAL_ERROR_INVAL, "loader.argv_src_file not specified");
         }
         PAL_HANDLE argv_handle;
         PAL_STREAM_ATTR attr;
         ret = _DkStreamOpen(&argv_handle, cfgbuf, PAL_ACCESS_RDONLY, 0, 0, 0);
         if (ret < 0)
-            init_fail(-ret, "can't open loader.argv_src_filename");
+            INIT_FAIL(-ret, "can't open loader.argv_src_file");
         ret = _DkStreamAttributesQuerybyHandle(argv_handle, &attr);
         if (ret < 0)
-            init_fail(-ret, "can't read attributes of loader.argv_src_filename");
+            INIT_FAIL(-ret, "can't read attributes of loader.argv_src_file");
         size_t argv_file_size = attr.pending_size;
         char* buf = malloc(argv_file_size);
         if (!buf)
-            init_fail(PAL_ERROR_NOMEM, "malloc failed");
+            INIT_FAIL(PAL_ERROR_NOMEM, "malloc failed");
         ret = _DkStreamRead(argv_handle, 0, argv_file_size, buf, NULL, 0);
         if (ret < 0)
-            init_fail(-ret, "can't read loader.argv_src_filename");
+            INIT_FAIL(-ret, "can't read loader.argv_src_file");
         if (argv_file_size == 0 || buf[argv_file_size - 1] != 0)
-            init_fail(PAL_ERROR_INVAL, "loader.argv_src_filename should contain a "
+            INIT_FAIL(PAL_ERROR_INVAL, "loader.argv_src_file should contain a "
                                        "list of C-strings");
         // Create argv array from the file contents.
         size_t argc = 0;
@@ -425,7 +425,7 @@ noreturn void pal_main (
         arguments = argv;
         ret = _DkObjectClose(argv_handle);
         if (ret < 0)
-            init_fail(-ret, "can't close loader.argv_src_filename");
+            INIT_FAIL(-ret, "can't close loader.argv_src_file");
     }
 
     read_environments(&environments);
