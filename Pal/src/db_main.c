@@ -394,7 +394,7 @@ noreturn void pal_main (
         ret = _DkStreamOpen(&argv_handle, cfgbuf, PAL_ACCESS_RDONLY, 0, 0, 0);
         if (ret < 0)
             INIT_FAIL(-ret, "can't open loader.argv_src_file");
-        ret = _DkStreamAttributesQuerybyHandle(argv_handle, &attr);
+        ret = _DkStreamAttributesQueryByHandle(argv_handle, &attr);
         if (ret < 0)
             INIT_FAIL(-ret, "can't read attributes of loader.argv_src_file");
         size_t argv_file_size = attr.pending_size;
