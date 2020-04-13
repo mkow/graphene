@@ -36,16 +36,20 @@ class TC_01_Bootstrap(RegressionTestCase):
         self.assertIn('argv[3] = c', stdout)
         self.assertIn('argv[4] = d', stdout)
 
+    def test_102_argv_from_file(self):
+        stdout, _ = self.run_binary(['argv_from_file', 'WRONG', 'ARGUMENTS'])
+        self.assertIn('Success!', stdout)
+
     @unittest.skipUnless(HAS_SGX,
         'This test is only meaningful on SGX PAL because only SGX catches raw '
         'syscalls and redirects to Graphene\'s LibOS. If we will add seccomp to '
         'Linux PAL, then we should allow this test on Linux PAL as well.')
-    def test_102_basic_bootstrapping_static(self):
+    def test_103_basic_bootstrapping_static(self):
         # bootstrap_static
         stdout, _ = self.run_binary(['bootstrap_static'])
         self.assertIn('Hello world (bootstrap_static)!', stdout)
 
-    def test_103_basic_bootstrapping_pie(self):
+    def test_104_basic_bootstrapping_pie(self):
         # bootstrap_pie
         stdout, _ = self.run_binary(['bootstrap_pie'])
         self.assertIn('User program started', stdout)

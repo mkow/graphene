@@ -7,6 +7,7 @@
 /.cache
 /abort
 /abort_multithread
+/argv_from_file
 /bootstrap
 /bootstrap-c++
 /bootstrap_pie

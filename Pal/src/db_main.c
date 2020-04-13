@@ -218,6 +218,7 @@ noreturn void pal_main (
         PAL_STR *  environments      /* environment variables */
     )
 {
+    char cfgbuf[CONFIG_MAX];
     pal_state.instance_id = instance_id;
     pal_state.alloc_align = _DkGetAllocationAlignment();
     assert(IS_POWER_OF_2(pal_state.alloc_align));
@@ -364,14 +365,67 @@ noreturn void pal_main (
     pal_state.exec            = exec_uri;
     pal_state.exec_handle     = exec_handle;
 
-    if (pal_state.root_config && *arguments
-        && (strendswith(*arguments, ".manifest") || strendswith(*arguments, ".manifest.sgx"))) {
-        /* Run as a manifest file,
-         * replace argv[0] with the contents of the manifest's loader.execname */
-        char cfgbuf[CONFIG_MAX];
-        ret = get_config(pal_state.root_config, "loader.execname", cfgbuf, sizeof(cfgbuf));
-        if (ret > 0)
-            *arguments = malloc_copy(cfgbuf, ret + 1);
+    // Load argv
+    if (get_config(pal_state.root_config, "loader.insecure__use_cmdline_argv",
+                   cfgbuf, CONFIG_MAX) > 0) {
+        printf("WARNING: Using insecure argv source. Don't use this configuration in production!\n");
+        /* TODO: Add an option to specify argv inline in the manifest. This requires an upgrade to
+         * the manifest syntax. See https://github.com/oscarlab/graphene/issues/870 (Use YAML or
+         * TOML syntax for manifests). 'loader.execname' won't be needed after implementing this
+         * feature and resolving https://github.com/oscarlab/graphene/issues/1053 (RFC: graphene
+         * invocation). */
+        if (pal_state.root_config && *arguments
+            && (strendswith(*arguments, ".manifest") || strendswith(*arguments, ".manifest.sgx"))) {
+            /* Ran as a manifest file, replace argv[0] with the contents of the manifest's
+             * loader.execname */
+            ret = get_config(pal_state.root_config, "loader.execname", cfgbuf, sizeof(cfgbuf));
+            if (ret > 0)
+                *arguments = malloc_copy(cfgbuf, ret + 1);
+        }
+    } else {
+        // Load argv from a file and discard cmdline argv. We trust the file contents (this can be
+        // achieved using protected or trusted files).
+        if (get_config(pal_state.root_config, "loader.argv_src_filename",
+                       cfgbuf, CONFIG_MAX) <= 0) {
+            init_fail(PAL_ERROR_INVAL, "loader.argv_src_filename not specified");
+        }
+        PAL_HANDLE argv_handle;
+        PAL_STREAM_ATTR attr;
+        ret = _DkStreamOpen(&argv_handle, cfgbuf, PAL_ACCESS_RDONLY, 0, 0, 0);
+        if (ret < 0)
+            init_fail(-ret, "can't open loader.argv_src_filename");
+        ret = _DkStreamAttributesQuerybyHandle(argv_handle, &attr);
+        if (ret < 0)
+            init_fail(-ret, "can't read attributes of loader.argv_src_filename");
+        size_t argv_file_size = attr.pending_size;
+        char* buf = malloc(argv_file_size);
+        if (!buf)
+            init_fail(PAL_ERROR_NOMEM, "malloc failed");
+        ret = _DkStreamRead(argv_handle, 0, argv_file_size, buf, NULL, 0);
+        if (ret < 0)
+            init_fail(-ret, "can't read loader.argv_src_filename");
+        if (argv_file_size == 0 || buf[argv_file_size - 1] != 0)
+            init_fail(PAL_ERROR_INVAL, "loader.argv_src_filename should contain a "
+                                       "list of C-strings");
+        // Create argv array from the file contents.
+        size_t argc = 0;
+        for (size_t i = 0; i < argv_file_size; i++)
+            if (buf[i] == '\0')
+                argc++;
+        const char** argv = malloc(sizeof(const char*)*(argc + 1));
+        assert(argc > 0);
+        argv[argc] = NULL;
+        const char** argv_it = argv;
+        *(argv_it++) = buf;
+        assert(argv_file_size > 0);
+        for (size_t i = 0; i < argv_file_size - 1; i++)
+            if (buf[i] == '\0') {
+                *(argv_it++) = buf + i + 1;
+            }
+        arguments = argv;
+        ret = _DkObjectClose(argv_handle);
+        if (ret < 0)
+            init_fail(-ret, "can't close loader.argv_src_filename");
     }
 
     read_environments(&environments);

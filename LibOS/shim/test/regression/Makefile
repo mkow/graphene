@@ -1,6 +1,7 @@
 c_executables = \
 	abort \
 	abort_multithread \
+	argv_from_file \
 	bootstrap \
 	bootstrap_pie \
 	bootstrap_static \
@@ -64,6 +65,7 @@ cxx_executables = bootstrap-c++
 
 manifests = \
 	manifest \
+	argv_from_file.manifest \
 	echo.manifest \
 	eventfd.manifest \
 	exec_victim.manifest \
@@ -96,7 +98,8 @@ exec_target = \
 
 target = \
 	$(exec_target) \
-	$(manifests)
+	$(manifests) \
+	argv_test_input
 
 clean-extra += clean-tmp
 
@@ -119,6 +122,9 @@ CFLAGS-futex_wake_op = -pthread
 CFLAGS-proc = -pthread
 CFLAGS-spinlock += -I$(PALDIR)/../include/lib -pthread
 CFLAGS-sigprocmask += -pthread
+
+argv_test_input: ../../../../Tools/argv_serializer
+	../../../../Tools/argv_serializer argv_from_file THIS SHOULD GO TO THE APP > argv_test_input
 
 %: %.c
 	$(call cmd,csingle)
