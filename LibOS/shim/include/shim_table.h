@@ -320,7 +320,6 @@ long __shim_msgpersist(long, long);
 long __shim_benchmark_rpc(long, long, long, long);
 long __shim_send_rpc(long, long, long);
 long __shim_recv_rpc(long, long, long);
-long __shim_checkpoint(long);
 
 /* syscall implementation */
 size_t shim_do_read(int fd, void* buf, size_t count);
