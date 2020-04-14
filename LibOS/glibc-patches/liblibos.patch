@@ -78,7 +78,7 @@ new file mode 100644
 index 0000000..8785629
 --- /dev/null
 +++ b/libos/wrapper.c
-@@ -0,0 +1,32 @@
+@@ -0,0 +1,34 @@
 +#include <errno.h>
 +#include <kernel-features.h>
 +#include <shim_unistd.h>
