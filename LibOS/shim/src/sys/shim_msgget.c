@@ -576,7 +576,6 @@ int add_sysv_msg(struct shim_msg_handle* msgq, long type, size_t size, const voi
     struct shim_handle* hdl = MSG_TO_HANDLE(msgq);
     int ret = 0;
 
-    assert(src);
     lock(&hdl->lock);
 
     if (msgq->deleted) {
@@ -586,6 +585,7 @@ int add_sysv_msg(struct shim_msg_handle* msgq, long type, size_t size, const voi
 
     if (!msgq->owned) {
         unlock(&hdl->lock);
+        assert(src);
         ret = ipc_sysv_msgsnd_send(src->port, src->vmid, msgq->msqid, type, data, size, src->seq);
         goto out;
     }
