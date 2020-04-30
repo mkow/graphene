@@ -1500,7 +1500,7 @@ int shim_do_getsockname(int sockfd, struct sockaddr* addr, int* addrlen) {
     struct shim_handle* hdl = get_fd_handle(sockfd, NULL, NULL);
     if (!hdl)
         return -EBADF;
-    
+
     int ret = 0;
     if (hdl->type != TYPE_SOCK) {
         ret = -ENOTSOCK;
