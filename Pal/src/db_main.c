@@ -299,7 +299,7 @@ noreturn void pal_main(
         pal_state.root_config = root_config;
     }
     pal_printf("$$$$$ %d\n", -1);
-    pal_printf("$$$$$ %lld\n", -100000000000LLD);
+    pal_printf("$$$$$ %lld\n", -100000000000ll);
 
     /* if there is no executable, try to find one in the manifest */
     if (!exec_handle && pal_state.root_config) {
