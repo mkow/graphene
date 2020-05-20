@@ -298,7 +298,7 @@ noreturn void pal_main(
 
         pal_state.root_config = root_config;
     }
-    printf("$$$$$ %d\n", -1);
+    pal_printf("$$$$$ %d\n", -1);
 
     /* if there is no executable, try to find one in the manifest */
     if (!exec_handle && pal_state.root_config) {
