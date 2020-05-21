@@ -31,26 +31,24 @@ static int printnum(int (*_fputch)(void*, int, void*), void* f, void* putdat,
     return 0;
 }
 
-// Get an unsigned int of various possible sizes from a varargs list,
-// depending on the lflag parameter.
-static inline unsigned long long getuint(va_list ap, int lflag) {
-    if (lflag >= 2)
-        return va_arg(ap, unsigned long long);
-    if (lflag)
-        return va_arg(ap, unsigned long);
-    return va_arg(ap, unsigned int);
-}
+// Get an unsigned integer of various possible sizes from a varargs list, depending on the lflag
+// parameter.
+// Defined as macro because it alters `ap` and passing `va_list` by pointer turns out to be tricky
+//  - on some archs it's defined as array and then `&ap` has a different type than `va_list*`.
+#define GET_UINT(ap, lflag)          \
+    (((lflag) >= 2)                  \
+    ? va_arg(ap, unsigned long long) \
+    : (lflag)                        \
+        ? va_arg(ap, unsigned long)  \
+        : va_arg(ap, unsigned int))
 
-// Same as getuint but signed - can't use getuint
-// because of sign extension
-static inline long long getint(va_list ap, int lflag)
-{
-    if (lflag >= 2)
-        return va_arg(ap, long long);
-    if (lflag)
-        return va_arg(ap, long);
-    return va_arg(ap, int);
-}
+// Same as GET_UINT but signed
+#define GET_INT(ap, lflag)  \
+    (((lflag) >= 2)         \
+    ? va_arg(ap, long long) \
+    : (lflag)               \
+        ? va_arg(ap, long)  \
+        : va_arg(ap, int))
 
 void vfprintfmt(int (*_fputch)(void*, int, void*), void* f, void* putdat, const char* fmt,
                 va_list ap) {
@@ -97,9 +95,9 @@ void vfprintfmt(int (*_fputch)(void*, int, void*), void* f, void* putdat, const 
             case '7':
             case '8':
             case '9':
-                for (precision = 0;; ++fmt) {
+                for (precision = 0;; fmt++) {
                     precision = precision * 10 + ch - '0';
-                    ch        = *fmt;
+                    ch = *fmt;
                     if (ch < '0' || ch > '9')
                         break;
                 }
@@ -160,12 +158,12 @@ void vfprintfmt(int (*_fputch)(void*, int, void*), void* f, void* putdat, const 
             // (signed) decimal
             case 'd':
             case 'i':
-                num_s = getint(ap, lflag);
+                num_s = GET_INT(ap, lflag);
                 if (num_s < 0) {
                     if ((*_fputch)(f, '-', putdat) == -1)
                         return;
-                    num_u = -(num_s+1); // This way we evade a UB (negation of the smallest int
-                                        // value)
+                    num_u = -(num_s + 1); // This way we evade a potential UB (negation of the
+                                          // smallest int value)
                     num_u++;
                 } else {
                     num_u = num_s;
@@ -175,13 +173,13 @@ void vfprintfmt(int (*_fputch)(void*, int, void*), void* f, void* putdat, const 
 
             // unsigned decimal
             case 'u':
-                num_u = getuint(ap, lflag);
+                num_u = GET_UINT(ap, lflag);
                 base = 10;
                 goto print_unsigned;
 
             // (unsigned) octal
             case 'o':
-                num_u  = getuint(ap, lflag);
+                num_u  = GET_UINT(ap, lflag);
                 base = 8;
                 goto print_unsigned;
 
@@ -197,7 +195,7 @@ void vfprintfmt(int (*_fputch)(void*, int, void*), void* f, void* putdat, const 
 
             // (unsigned) hexadecimal
             case 'x':
-                num_u = getuint(ap, lflag);
+                num_u = GET_UINT(ap, lflag);
                 base = 16;
             print_unsigned:
                 if (printnum(_fputch, f, putdat, num_u, base, width, padc) == -1)
