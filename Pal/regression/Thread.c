@@ -44,7 +44,7 @@ int main(int argc, const char** argv, const char** envp) {
     if (thread1) {
         pal_printf("Child Thread Created\n");
 
-        while (count1 < 10) {
+        while (count1 < 9) {
             while (!!(count1 % 2)) {
                 DkThreadYieldExecution();
             }
