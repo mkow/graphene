@@ -63,7 +63,7 @@ int main(int argc, const char** argv, const char** envp) {
         if (count1 == 100)
             pal_printf("Child Thread Exited\n");
         else
-            pal_printf("huh. count = %d\n", count);
+            pal_printf("huh. count = %d\n", count1);
     }
 
     return 0;
