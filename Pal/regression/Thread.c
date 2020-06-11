@@ -1,21 +1,20 @@
-#include <stdatomic.h>
-
 #include "pal.h"
 #include "pal_debug.h"
 
 void* private1 = "Hello World 1";
 void* private2 = "Hello World 2";
 
-static atomic_int count = 0;
+static volatile int count1 = 0;
 
 static int callback1(void* args) {
     pal_printf("Run in Child Thread: %s\n", (char*)args);
 
-    while (count < 10) {
-        while (!(count % 2)) {
+    while (count1 < 10) {
+        while (!(count1 % 2)) {
             DkThreadYieldExecution();
         }
-        count++;
+        count1++;
+        __asm__ volatile("nop" ::: "memory");
     }
 
     pal_printf("Threads Run in Parallel OK\n");
@@ -25,14 +24,16 @@ static int callback1(void* args) {
     __asm__ volatile("mov %%fs:0, %0" : "=r"(ptr2)::"memory");
     pal_printf("Private Message (FS Segment) 2: %s\n", ptr2);
 
-    count = 100;
+    count1 = 100;
+    __asm__ volatile("nop" ::: "memory");
     DkThreadExit(/*clear_child_tid=*/NULL);
-    count = 101;
+    count1 = 101;
+    __asm__ volatile("nop" ::: "memory");
 
     return 0;
 }
 
-int main() {
+int main(int argc, const char** argv, const char** envp) {
     DkSegmentRegister(PAL_SEGMENT_FS, &private1);
     const char* ptr1;
     __asm__ volatile("mov %%fs:0, %0" : "=r"(ptr1)::"memory");
@@ -43,18 +44,23 @@ int main() {
     if (thread1) {
         pal_printf("Child Thread Created\n");
 
-        while (count < 10) {
-            while (!!(count % 2)) {
+        while (count1 < 10) {
+            while (!!(count1 % 2)) {
                 DkThreadYieldExecution();
             }
-            count++;
+            count1++;
+            __asm__ volatile("nop" ::: "memory");
         }
 
-        while (count < 100) {
+        while (count1 < 100) {
+            DkThreadYieldExecution();
+        }
+        for (int i = 0; i < 500; i++) {
             DkThreadYieldExecution();
         }
 
-        if (count == 100)
+        __asm__ volatile("nop" ::: "memory");
+        if (count1 == 100)
             pal_printf("Child Thread Exited\n");
         else
             pal_printf("huh. count = %d\n", count);
