@@ -1037,8 +1037,8 @@ noreturn void start_execution(const char** arguments, const char** environs) {
     /* First we will try to run all the preloaded libraries which come with
        entry points */
     if (g_exec_map) {
-        g_pal_control.executable_range.start = ALLOC_ALIGN_DOWN_PTR(g_exec_map->l_map_start);
-        g_pal_control.executable_range.end   = ALLOC_ALIGN_UP_PTR(g_exec_map->l_map_end);
+        g_pal_control.executable_range.start = (PAL_PTR)ALLOC_ALIGN_DOWN(g_exec_map->l_map_start);
+        g_pal_control.executable_range.end   = (PAL_PTR)ALLOC_ALIGN_UP(g_exec_map->l_map_end);
     }
 
     int narguments = 0;
