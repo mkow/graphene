@@ -117,12 +117,12 @@ void _DkGetAvailableUserAddressRange(PAL_PTR* start, PAL_PTR* end, PAL_NUM* gap)
             INIT_FAIL(PAL_ERROR_NOMEM, "no user memory available");
 
         void * mem = (void *) ARCH_MMAP(start_addr,
-                                        pal_state.alloc_align,
+                                        g_pal_state.alloc_align,
                                         PROT_NONE,
                                         MAP_FIXED|MAP_ANONYMOUS|MAP_PRIVATE,
                                         -1, 0);
         if (!IS_ERR_P(mem)) {
-            INLINE_SYSCALL(munmap, 2, mem, pal_state.alloc_align);
+            INLINE_SYSCALL(munmap, 2, mem, g_pal_state.alloc_align);
             if (mem == start_addr)
                 break;
         }
@@ -170,7 +170,7 @@ void pal_linux_main(void* initial_rsp, void* fini_callback) {
     __UNUSED(fini_callback);  // TODO: We should call `fini_callback` at the end.
 
     unsigned long start_time = _DkSystemTimeQueryEarly();
-    pal_state.start_time = start_time;
+    g_pal_state.start_time = start_time;
 
     int argc;
     const char** argv;

@@ -297,7 +297,7 @@ void pal_linux_main(char* uptr_args, uint64_t args_size, char* uptr_env, uint64_
     setup_pal_map(&g_pal_map);
 
     /* Set the alignment early */
-    pal_state.alloc_align = g_page_size;
+    g_pal_state.alloc_align = g_page_size;
 
     /* initialize enclave properties */
     rv = init_enclave();
@@ -318,7 +318,7 @@ void pal_linux_main(char* uptr_args, uint64_t args_size, char* uptr_env, uint64_
         return;
     }
 
-    pal_state.start_time = start_time;
+    g_pal_state.start_time = start_time;
 
     g_linux_state.uid = g_pal_sec.uid;
     g_linux_state.gid = g_pal_sec.gid;
@@ -376,9 +376,9 @@ void pal_linux_main(char* uptr_args, uint64_t args_size, char* uptr_env, uint64_
         ocall_exit(rv, /*is_exitgroup=*/true);
     }
 
-    pal_state.root_config = root_config;
-    __pal_control.manifest_preload.start = (PAL_PTR) manifest_addr;
-    __pal_control.manifest_preload.end = (PAL_PTR) manifest_addr + manifest_size;
+    g_pal_state.root_config = root_config;
+    g_pal_control.manifest_preload.start = (PAL_PTR) manifest_addr;
+    g_pal_control.manifest_preload.end = (PAL_PTR) manifest_addr + manifest_size;
 
     if ((rv = init_trusted_files()) < 0) {
         SGX_DBG(DBG_E, "Failed to load the checksums of trusted files: %d\n", rv);
@@ -406,7 +406,7 @@ void pal_linux_main(char* uptr_args, uint64_t args_size, char* uptr_env, uint64_
     SET_HANDLE_TYPE(first_thread, thread);
     first_thread->thread.tcs =
         enclave_base + GET_ENCLAVE_TLS(tcs_offset);
-    __pal_control.first_thread = first_thread;
+    g_pal_control.first_thread = first_thread;
     SET_ENCLAVE_TLS(thread, &first_thread->thread);
 
     /* call main function */

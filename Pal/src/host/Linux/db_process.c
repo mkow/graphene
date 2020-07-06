@@ -174,7 +174,7 @@ int _DkProcessCreate(PAL_HANDLE* handle, const char* uri, const char** args) {
 
     param.parent = parent_handle;
     param.exec = exec;
-    param.manifest = pal_state.manifest_handle;
+    param.manifest = g_pal_state.manifest_handle;
 
     /* step 3: compose process parameters */
 
@@ -197,8 +197,8 @@ int _DkProcessCreate(PAL_HANDLE* handle, const char* uri, const char** args) {
         exec_datasz = (size_t)ret;
     }
 
-    if (pal_state.manifest_handle) {
-        ret = handle_serialize(pal_state.manifest_handle, &manifest_data);
+    if (g_pal_state.manifest_handle) {
+        ret = handle_serialize(g_pal_state.manifest_handle, &manifest_data);
         if (ret < 0) {
             free(parent_data);
             free(exec_data);

@@ -742,7 +742,7 @@ static int init_trusted_file (const char * key, const char * uri)
     tmp = strcpy_static(cskey, "sgx.trusted_checksum.", URI_MAX);
     memcpy(tmp, key, strlen(key) + 1);
 
-    ssize_t ret = get_config(pal_state.root_config, cskey, checksum, sizeof(checksum));
+    ssize_t ret = get_config(g_pal_state.root_config, cskey, checksum, sizeof(checksum));
     if (ret < 0)
         return 0;
 
@@ -767,7 +767,7 @@ static int init_trusted_file (const char * key, const char * uri)
 }
 
 int init_trusted_files (void) {
-    struct config_store* store = pal_state.root_config;
+    struct config_store* store = g_pal_state.root_config;
     char* cfgbuf = NULL;
     ssize_t cfgsize;
     int nuris, ret;
@@ -913,7 +913,7 @@ out:
 
 int init_trusted_children (void)
 {
-    struct config_store * store = pal_state.root_config;
+    struct config_store * store = g_pal_state.root_config;
 
     char key[CONFIG_MAX], mrkey[CONFIG_MAX];
     char uri[CONFIG_MAX], mr_enclave[CONFIG_MAX];
@@ -955,7 +955,7 @@ int init_trusted_children (void)
 int init_file_check_policy (void)
 {
     char cfgbuf[CONFIG_MAX];
-    ssize_t ret = get_config(pal_state.root_config, "sgx.file_check_policy",
+    ssize_t ret = get_config(g_pal_state.root_config, "sgx.file_check_policy",
                              cfgbuf, sizeof(cfgbuf));
 
     if (ret > 0) {

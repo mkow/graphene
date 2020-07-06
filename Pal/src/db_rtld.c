@@ -345,7 +345,7 @@ postmap:
                 {
                     /* Dag nab it.  */
                     ret = _DkVirtualMemoryProtect(
-                        (void*)ALLOC_ALIGN_DOWN(zero), pal_state.alloc_align,
+                        (void*)ALLOC_ALIGN_DOWN(zero), g_pal_state.alloc_align,
                         c->prot | PAL_PROT_WRITE);
                     if (ret < 0) {
                         print_error("cannot change memory protections", ret);
@@ -355,7 +355,7 @@ postmap:
                 memset ((void *) zero, '\0', zerosec - zero);
                 if ((c->prot & PAL_PROT_WRITE) == 0)
                     _DkVirtualMemoryProtect((void*)ALLOC_ALIGN_DOWN(zero),
-                                            pal_state.alloc_align, c->prot);
+                                            g_pal_state.alloc_align, c->prot);
             }
 
             if (zeroend > zerosec) {
@@ -1037,8 +1037,8 @@ noreturn void start_execution(const char** arguments, const char** environs) {
     /* First we will try to run all the preloaded libraries which come with
        entry points */
     if (exec_map) {
-        __pal_control.executable_range.start = (PAL_PTR)ALLOC_ALIGN_DOWN_PTR(exec_map->l_map_start);
-        __pal_control.executable_range.end   = (PAL_PTR)ALLOC_ALIGN_UP_PTR(exec_map->l_map_end);
+        g_pal_control.executable_range.start = (PAL_PTR)ALLOC_ALIGN_DOWN_PTR(exec_map->l_map_start);
+        g_pal_control.executable_range.end   = (PAL_PTR)ALLOC_ALIGN_UP_PTR(exec_map->l_map_end);
     }
 
     int narguments = 0;
