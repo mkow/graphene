@@ -211,7 +211,7 @@ int _DkProcessCreate(PAL_HANDLE* handle, const char* uri, const char** args) {
     struct proc_args* proc_args = __alloca(sizeof(struct proc_args) + datasz);
 
     proc_args->parent_process_id = g_linux_state.parent_process_id;
-    memcpy(&proc_args->pal_sec, &pal_sec, sizeof(struct pal_sec));
+    memcpy(&proc_args->pal_sec, &g_pal_sec, sizeof(struct pal_sec));
     proc_args->pal_sec._dl_debug_state = NULL;
     proc_args->pal_sec._r_debug = NULL;
     proc_args->memory_quota = g_linux_state.memory_quota;
@@ -365,7 +365,7 @@ void init_child_process(int parent_pipe_fd, PAL_HANDLE* parent_handle, PAL_HANDL
     }
     g_linux_state.parent_process_id = proc_args->parent_process_id;
     g_linux_state.memory_quota = proc_args->memory_quota;
-    memcpy(&pal_sec, &proc_args->pal_sec, sizeof(struct pal_sec));
+    memcpy(&g_pal_sec, &proc_args->pal_sec, sizeof(struct pal_sec));
 }
 
 noreturn void _DkProcessExit (int exitcode)
