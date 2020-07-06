@@ -152,7 +152,7 @@ void setup_pal_map (struct link_map * pal_map)
 
     _DkDebugAddMap(pal_map);
     pal_map->l_prev = pal_map->l_next = NULL;
-    loaded_maps = pal_map;
+    g_loaded_maps = pal_map;
 }
 
 #if USE_VDSO_GETTIME == 1

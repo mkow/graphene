@@ -156,13 +156,13 @@ int _DkProcessCreate(PAL_HANDLE* handle, const char* uri, const char** args) {
          */
         size_t len;
         const char* file_uri = URI_PREFIX_FILE;
-        if (exec_map && exec_map->l_name &&
+        if (g_exec_map && g_exec_map->l_name &&
             (len = strlen(uri)) >= URI_PREFIX_FILE_LEN && !memcmp(uri, file_uri, URI_PREFIX_FILE_LEN) &&
             /* skip "file:"*/
-            strlen(exec_map->l_name) == len - URI_PREFIX_FILE_LEN &&
+            strlen(g_exec_map->l_name) == len - URI_PREFIX_FILE_LEN &&
             /* + 1 for lasting * NUL */
-            !memcmp(exec_map->l_name, uri + URI_PREFIX_FILE_LEN, len - URI_PREFIX_FILE_LEN + 1))
-            exec->file.map_start = (PAL_PTR)exec_map->l_map_start;
+            !memcmp(g_exec_map->l_name, uri + URI_PREFIX_FILE_LEN, len - URI_PREFIX_FILE_LEN + 1))
+            exec->file.map_start = (PAL_PTR)g_exec_map->l_map_start;
     }
 
     /* step 2: create parent and child process handle */
