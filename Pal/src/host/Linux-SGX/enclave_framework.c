@@ -12,7 +12,7 @@
 
 #include "enclave_pages.h"
 
-__sgx_mem_aligned struct pal_enclave_state pal_enclave_state;
+__sgx_mem_aligned struct pal_enclave_state g_pal_enclave_state;
 
 void * enclave_base, * enclave_top;
 
@@ -125,7 +125,7 @@ static sgx_key_128bit_t enclave_key;
 static int __sgx_get_report(sgx_target_info_t* target_info, sgx_sign_data_t* data,
                             sgx_report_t* report) {
     __sgx_mem_aligned struct pal_enclave_state state;
-    memcpy(&state, &pal_enclave_state, sizeof(state));
+    memcpy(&state, &g_pal_enclave_state, sizeof(state));
     memcpy(&state.enclave_data, data, sizeof(*data));
 
     int ret = sgx_report(target_info, &state, report);
@@ -1000,8 +1000,8 @@ int init_enclave (void)
      * for authenticating the enclave as the sender of attestation.
      * See 'host/Linux-SGX/db_process.c' for further explanation.
      */
-    ret = _DkRandomBitsRead(&pal_enclave_state.enclave_id,
-                            sizeof(pal_enclave_state.enclave_id));
+    ret = _DkRandomBitsRead(&g_pal_enclave_state.enclave_id,
+                            sizeof(g_pal_enclave_state.enclave_id));
     if (ret < 0) {
         SGX_DBG(DBG_E, "Failed to generate a random id: %d\n", ret);
         return ret;

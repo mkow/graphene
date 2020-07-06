@@ -264,7 +264,7 @@ int _DkProcessCreate (PAL_HANDLE * handle, const char * uri, const char ** args)
         goto failed;
 
     sgx_sign_data_t sign_data;
-    ret = generate_sign_data(&child->process.session_key, pal_enclave_state.enclave_id,
+    ret = generate_sign_data(&child->process.session_key, g_pal_enclave_state.enclave_id,
                              &sign_data);
     if (ret < 0)
         goto failed;
@@ -324,7 +324,7 @@ int init_child_process (PAL_HANDLE * parent_handle)
         return ret;
 
     sgx_sign_data_t sign_data;
-    ret = generate_sign_data(&parent->process.session_key, pal_enclave_state.enclave_id,
+    ret = generate_sign_data(&parent->process.session_key, g_pal_enclave_state.enclave_id,
                              &sign_data);
     if (ret < 0)
         return ret;

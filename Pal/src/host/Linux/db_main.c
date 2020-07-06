@@ -152,7 +152,7 @@ PAL_NUM _DkGetHostId (void)
 void setup_vdso_map (ElfW(Addr) addr);
 #endif
 
-static struct link_map pal_map;
+static struct link_map g_pal_map;
 
 #include "elf-arch.h"
 
@@ -186,12 +186,12 @@ void pal_linux_main(void* initial_rsp, void* fini_callback) {
         print_usage_and_exit(argv[0]);
     }
 
-    pal_map.l_addr = elf_machine_load_address();
-    pal_map.l_name = argv[0];
-    elf_get_dynamic_info((void*)pal_map.l_addr + elf_machine_dynamic(), pal_map.l_info,
-                         pal_map.l_addr);
+    g_pal_map.l_addr = elf_machine_load_address();
+    g_pal_map.l_name = argv[0];
+    elf_get_dynamic_info((void*)g_pal_map.l_addr + elf_machine_dynamic(), g_pal_map.l_info,
+                         g_pal_map.l_addr);
 
-    ELF_DYNAMIC_RELOCATE(&pal_map);
+    ELF_DYNAMIC_RELOCATE(&g_pal_map);
 
     g_linux_state.environ = envp;
 
@@ -217,7 +217,7 @@ void pal_linux_main(void* initial_rsp, void* fini_callback) {
     tcb->param       = NULL;
     pal_thread_init(tcb);
 
-    setup_pal_map(&pal_map);
+    setup_pal_map(&g_pal_map);
 
 #if USE_VDSO_GETTIME == 1
     if (sysinfo_ehdr)

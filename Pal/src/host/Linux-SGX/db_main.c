@@ -71,7 +71,7 @@ PAL_NUM _DkGetHostId (void)
 #include "dynamic_link.h"
 #include <asm/errno.h>
 
-static struct link_map pal_map;
+static struct link_map g_pal_map;
 
 /*
  * Creates a dummy file handle with the given name.
@@ -225,12 +225,12 @@ void pal_linux_main(char* uptr_args, uint64_t args_size, char* uptr_env, uint64_
     memset(zero2_start, 0, zero2_end - zero2_start);
 
     /* relocate PAL itself */
-    pal_map.l_addr = elf_machine_load_address();
-    pal_map.l_name = ENCLAVE_PAL_FILENAME;
-    elf_get_dynamic_info((void *) pal_map.l_addr + elf_machine_dynamic(),
-                         pal_map.l_info, pal_map.l_addr);
+    g_pal_map.l_addr = elf_machine_load_address();
+    g_pal_map.l_name = ENCLAVE_PAL_FILENAME;
+    elf_get_dynamic_info((void*)g_pal_map.l_addr + elf_machine_dynamic(), g_pal_map.l_info,
+                         g_pal_map.l_addr);
 
-    ELF_DYNAMIC_RELOCATE(&pal_map);
+    ELF_DYNAMIC_RELOCATE(&g_pal_map);
 
     /*
      * We can't verify the following arguments from the urts. So we copy
@@ -294,7 +294,7 @@ void pal_linux_main(char* uptr_args, uint64_t args_size, char* uptr_env, uint64_
     init_cpuid();
 
     /* now we can add a link map for PAL itself */
-    setup_pal_map(&pal_map);
+    setup_pal_map(&g_pal_map);
 
     /* Set the alignment early */
     pal_state.alloc_align = g_page_size;
@@ -342,7 +342,7 @@ void pal_linux_main(char* uptr_args, uint64_t args_size, char* uptr_env, uint64_
     }
 
     /* now let's mark our enclave as initialized */
-    pal_enclave_state.enclave_flags |= PAL_ENCLAVE_INITIALIZED;
+    g_pal_enclave_state.enclave_flags |= PAL_ENCLAVE_INITIALIZED;
 
     /*
      * We create dummy handles for exec and manifest here to make the logic in
