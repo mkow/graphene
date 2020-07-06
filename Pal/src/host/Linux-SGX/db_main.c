@@ -188,7 +188,7 @@ extern void * enclave_base;
 extern void * enclave_top;
 
 void pal_linux_main(char* uptr_args, uint64_t args_size, char* uptr_env, uint64_t env_size,
-                    struct g_pal_sec* uptr_sec_info) {
+                    struct pal_sec* uptr_sec_info) {
     /*
      * Our arguments are coming directly from the urts. We are responsible to check them.
      */
