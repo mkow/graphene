@@ -52,7 +52,7 @@ extern struct pal_sec {
     /* for debugger */
     void (*_dl_debug_state)(void);
     struct r_debug* _r_debug;
-} pal_sec;
+} g_pal_sec;
 
 #define RANDGEN_DEVICE "/dev/urandom"
 

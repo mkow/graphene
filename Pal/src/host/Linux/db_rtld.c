@@ -43,8 +43,8 @@ struct r_debug pal_r_debug =
 /* The special symbol name is set as breakpoint in gdb */
 void __attribute__((noinline)) pal_dl_debug_state (void)
 {
-    if (pal_sec._dl_debug_state)
-        pal_sec._dl_debug_state();
+    if (g_pal_sec._dl_debug_state)
+        g_pal_sec._dl_debug_state();
 }
 
 extern __typeof(pal_dl_debug_state) _dl_debug_state
@@ -53,7 +53,7 @@ extern __typeof(pal_dl_debug_state) _dl_debug_state
 void _DkDebugAddMap (struct link_map * map)
 {
 #ifdef DEBUG
-    struct r_debug * dbg = pal_sec._r_debug ? : &pal_r_debug;
+    struct r_debug* dbg = g_pal_sec._r_debug ? : &pal_r_debug;
     int len = map->l_name ? strlen(map->l_name) + 1 : 0;
 
     struct link_map ** prev = &dbg->r_map, * last = NULL,
@@ -99,7 +99,7 @@ void _DkDebugAddMap (struct link_map * map)
 void _DkDebugDelMap (struct link_map * map)
 {
 #ifdef DEBUG
-    struct r_debug * dbg = pal_sec._r_debug ? : &pal_r_debug;
+    struct r_debug* dbg = g_pal_sec._r_debug ? : &pal_r_debug;
     int len = map->l_name ? strlen(map->l_name) + 1 : 0;
 
     struct link_map ** prev = &dbg->r_map, * last = NULL,
@@ -221,9 +221,9 @@ void setup_vdso_map (ElfW(Addr) addr)
     sym = do_lookup_map(NULL, gettime, fast_hash, hash, &vdso_map);
     if (sym)
 #if USE_CLOCK_GETTIME == 1
-        linux_state.vdso_clock_gettime = (void *) (load_offset + sym->st_value);
+        g_linux_state.vdso_clock_gettime = (void *) (load_offset + sym->st_value);
 #else
-        linux_state.vdso_gettimeofday  = (void *) (load_offset + sym->st_value);
+        g_linux_state.vdso_gettimeofday  = (void *) (load_offset + sym->st_value);
 #endif
 }
 #endif

@@ -45,7 +45,7 @@ extern struct pal_linux_state {
 
     /* enclave */
     const char *    runtime_dir;
-} linux_state;
+} g_linux_state;
 
 #include <asm/mman.h>
 

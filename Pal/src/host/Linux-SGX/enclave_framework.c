@@ -776,8 +776,8 @@ int init_trusted_files (void) {
     char* k;
     char* tmp;
 
-    if (pal_sec.exec_name[0] != '\0') {
-        ret = init_trusted_file("exec", pal_sec.exec_name);
+    if (g_pal_sec.exec_name[0] != '\0') {
+        ret = init_trusted_file("exec", g_pal_sec.exec_name);
         if (ret < 0)
             goto out;
     }
@@ -991,9 +991,9 @@ int init_enclave (void)
         return -PAL_ERROR_INVAL;
     }
 
-    memcpy(&pal_sec.mr_enclave, &report.body.mr_enclave, sizeof(pal_sec.mr_enclave));
-    memcpy(&pal_sec.mr_signer, &report.body.mr_signer, sizeof(pal_sec.mr_signer));
-    pal_sec.enclave_attributes = report.body.attributes;
+    memcpy(&g_pal_sec.mr_enclave, &report.body.mr_enclave, sizeof(g_pal_sec.mr_enclave));
+    memcpy(&g_pal_sec.mr_signer, &report.body.mr_signer, sizeof(g_pal_sec.mr_signer));
+    g_pal_sec.enclave_attributes = report.body.attributes;
 
     /*
      * The enclave id is uniquely created for each enclave as a token
@@ -1114,8 +1114,8 @@ int _DkStreamReportRequest(PAL_HANDLE stream, sgx_sign_data_t* data,
 
     /* A -> B: targetinfo[A] */
     memset(&target_info, 0, sizeof(target_info));
-    memcpy(&target_info.mr_enclave,  &pal_sec.mr_enclave, sizeof(sgx_measurement_t));
-    memcpy(&target_info.attributes, &pal_sec.enclave_attributes, sizeof(sgx_attributes_t));
+    memcpy(&target_info.mr_enclave, &g_pal_sec.mr_enclave, sizeof(sgx_measurement_t));
+    memcpy(&target_info.attributes, &g_pal_sec.enclave_attributes, sizeof(sgx_attributes_t));
 
     for (bytes = 0, ret = 0; bytes < SGX_TARGETINFO_FILLED_SIZE; bytes += ret) {
         ret = _DkStreamWrite(stream, 0, SGX_TARGETINFO_FILLED_SIZE - bytes,

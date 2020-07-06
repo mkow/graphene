@@ -55,7 +55,7 @@ static inline int create_process_handle(PAL_HANDLE* parent, PAL_HANDLE* child) {
     SET_HANDLE_TYPE(phdl, process);
     HANDLE_HDR(phdl)->flags  |= RFD(0)|WFD(0);
     phdl->process.stream      = fds[0];
-    phdl->process.pid         = linux_state.pid;
+    phdl->process.pid         = g_linux_state.pid;
     phdl->process.nonblocking = PAL_FALSE;
 
     chdl = malloc(HANDLE_SIZE(process));
@@ -127,7 +127,7 @@ static int __attribute_noinline child_process(struct proc_param* proc_param) {
     if (proc_param->manifest)
         handle_set_cloexec(proc_param->manifest, false);
 
-    int res = INLINE_SYSCALL(execve, 3, PAL_LOADER, proc_param->argv, linux_state.environ);
+    int res = INLINE_SYSCALL(execve, 3, PAL_LOADER, proc_param->argv, g_linux_state.environ);
     /* execve failed, but we're after vfork, so we can't do anything more than just exit */
     INLINE_SYSCALL(exit_group, 1, ERRNO(res));
     /* UNREACHABLE */
@@ -210,11 +210,11 @@ int _DkProcessCreate(PAL_HANDLE* handle, const char* uri, const char** args) {
     size_t datasz = parent_datasz + exec_datasz + manifest_datasz;
     struct proc_args* proc_args = __alloca(sizeof(struct proc_args) + datasz);
 
-    proc_args->parent_process_id = linux_state.parent_process_id;
+    proc_args->parent_process_id = g_linux_state.parent_process_id;
     memcpy(&proc_args->pal_sec, &pal_sec, sizeof(struct pal_sec));
     proc_args->pal_sec._dl_debug_state = NULL;
     proc_args->pal_sec._r_debug = NULL;
-    proc_args->memory_quota = linux_state.memory_quota;
+    proc_args->memory_quota = g_linux_state.memory_quota;
 
     void* data = (void*)(proc_args + 1);
 
@@ -363,8 +363,8 @@ void init_child_process(int parent_pipe_fd, PAL_HANDLE* parent_handle, PAL_HANDL
         data += proc_args->manifest_data_size;
         *manifest_handle = manifest;
     }
-    linux_state.parent_process_id = proc_args->parent_process_id;
-    linux_state.memory_quota = proc_args->memory_quota;
+    g_linux_state.parent_process_id = proc_args->parent_process_id;
+    g_linux_state.memory_quota = proc_args->memory_quota;
     memcpy(&pal_sec, &proc_args->pal_sec, sizeof(struct pal_sec));
 }
 
