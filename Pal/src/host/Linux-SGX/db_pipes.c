@@ -374,15 +374,12 @@ static int pipe_open(PAL_HANDLE* handle, const char* type, const char* uri, int 
  * \return             Number of bytes read on success, negative PAL error code otherwise.
  */
 static int64_t pipe_read(PAL_HANDLE handle, uint64_t offset, uint64_t len, void* buffer) {
-    printf("XXXXXXXXXXXX: 7\n");
     if (offset) {
-        printf("XXXXXXXXXXXX: 8\n");
         return -PAL_ERROR_INVAL;
     }
 
     if (!IS_HANDLE_TYPE(handle, pipecli) && !IS_HANDLE_TYPE(handle, pipeprv) &&
         !IS_HANDLE_TYPE(handle, pipe)) {
-        printf("XXXXXXXXXXXX: 9\n");
         return -PAL_ERROR_NOTCONNECTION;
     }
 
@@ -391,7 +388,6 @@ static int64_t pipe_read(PAL_HANDLE handle, uint64_t offset, uint64_t len, void*
         /* pipeprv are currently not encrypted, see pipe_private() */
         bytes = ocall_recv(handle->pipeprv.fds[0], buffer, len, NULL, NULL, NULL, NULL);
         if (IS_ERR(bytes)) {
-            printf("XXXXXXXXXXXX: 10\n");
             return unix_to_pal_error(ERRNO(bytes));
         }
     } else {
@@ -400,7 +396,6 @@ static int64_t pipe_read(PAL_HANDLE handle, uint64_t offset, uint64_t len, void*
             cpu_pause();
 
         if (!handle->pipe.ssl_ctx) {
-            printf("XXXXXXXXXXXX: 11\n");
             return -PAL_ERROR_NOTCONNECTION;
         }
 
@@ -408,11 +403,9 @@ static int64_t pipe_read(PAL_HANDLE handle, uint64_t offset, uint64_t len, void*
     }
 
     if (!bytes) {
-        printf("XXXXXXXXXXXX: 11\n");
         return -PAL_ERROR_ENDOFSTREAM;
     }
 
-    printf("XXXXXXXXXXXX: 12: %ld\n", bytes);
     return bytes;
 }
 

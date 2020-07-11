@@ -25,20 +25,16 @@
 #include <shim_thread.h>
 
 static ssize_t pipe_read(struct shim_handle* hdl, void* buf, size_t count) {
-    SYS_PRINTF("XXXXXXXXXXXX: 3\n");
     if (!hdl->info.pipe.ready_for_ops) {
-        SYS_PRINTF("XXXXXXXXXXXX: 4\n");
         return -EACCES;
     }
 
     PAL_NUM bytes = DkStreamRead(hdl->pal_handle, 0, count, buf, NULL, 0);
 
     if (bytes == PAL_STREAM_ERROR) {
-        SYS_PRINTF("XXXXXXXXXXXX: 5\n");
         return -PAL_ERRNO();
     }
 
-    SYS_PRINTF("XXXXXXXXXXXX: 6\n");
     return (ssize_t)bytes;
 }
 

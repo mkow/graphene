@@ -178,7 +178,6 @@ static int64_t file_read(PAL_HANDLE handle, uint64_t offset, uint64_t count, voi
         ret = ocall_pread(handle->file.fd, buffer, count, offset);
         if (IS_ERR(ret))
             return unix_to_pal_error(ERRNO(ret));
-        printf("XXXXXXXXXXXX: 1\n");
         return ret;
     }
 
@@ -197,7 +196,6 @@ static int64_t file_read(PAL_HANDLE handle, uint64_t offset, uint64_t count, voi
     ret = copy_and_verify_trusted_file(handle->file.realpath, handle->file.umem + map_start,
             map_start, map_end, buffer, offset, end - offset, stubs, total);
     if (ret < 0) {
-        printf("XXXXXXXXXXXX: 2\n");
         return ret;
     }
 
