@@ -412,7 +412,7 @@ static int64_t pipe_read(PAL_HANDLE handle, uint64_t offset, uint64_t len, void*
         return -PAL_ERROR_ENDOFSTREAM;
     }
 
-    printf("XXXXXXXXXXXX: 12\n");
+    printf("XXXXXXXXXXXX: 12: %ld\n", bytes);
     return bytes;
 }
 
