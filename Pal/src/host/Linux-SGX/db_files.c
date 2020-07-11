@@ -56,7 +56,7 @@ static int file_open(PAL_HANDLE* handle, const char* type, const char* uri, int 
 
     struct protected_file* pf = get_protected_file(path);
     /* whether to re-initialize the PF */
-    bool pf_create = (create & PAL_CREATE_ALWAYS) || (options & PAL_CREATE_TRY);
+    bool pf_create = (create & PAL_CREATE_ALWAYS) || (create & PAL_CREATE_TRY);
 
     /* try to do the real open */
     int fd = ocall_open(uri, PAL_ACCESS_TO_LINUX_OPEN(access)  |
@@ -178,6 +178,7 @@ static int64_t file_read(PAL_HANDLE handle, uint64_t offset, uint64_t count, voi
         ret = ocall_pread(handle->file.fd, buffer, count, offset);
         if (IS_ERR(ret))
             return unix_to_pal_error(ERRNO(ret));
+        printf("XXXXXXXXXXXX: 1\n");
         return ret;
     }
 
@@ -195,8 +196,10 @@ static int64_t file_read(PAL_HANDLE handle, uint64_t offset, uint64_t count, voi
 
     ret = copy_and_verify_trusted_file(handle->file.realpath, handle->file.umem + map_start,
             map_start, map_end, buffer, offset, end - offset, stubs, total);
-    if (ret < 0)
+    if (ret < 0) {
+        printf("XXXXXXXXXXXX: 2\n");
         return ret;
+    }
 
     return end - offset;
 }
