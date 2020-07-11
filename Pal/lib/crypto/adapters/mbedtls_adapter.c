@@ -500,7 +500,8 @@ int lib_SSLRead(LIB_SSL_CONTEXT* ssl_ctx, uint8_t* buf, size_t buf_size) {
     if (ret == 0)
         return -PAL_ERROR_ENDOFSTREAM;
     if (ret < 0) {
-        return mbedtls_to_pal_error(-ret);
+        // return mbedtls_to_pal_error(-ret);
+        return ret;
     }
     return ret;
 }
