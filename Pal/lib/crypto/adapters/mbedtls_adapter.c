@@ -500,7 +500,7 @@ int lib_SSLRead(LIB_SSL_CONTEXT* ssl_ctx, uint8_t* buf, size_t buf_size) {
     if (ret == 0)
         return -PAL_ERROR_ENDOFSTREAM;
     if (ret < 0) {
-        SYS_PRINTF("XXXXXXXXXXXX: 13: %d\n", ret);
+        debug("XXXXXXXXXXXX: 13: %d\n", ret);
         return -PAL_ERROR_DENIED;
     }
     return ret;
