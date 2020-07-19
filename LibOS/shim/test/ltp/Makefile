@@ -48,13 +48,13 @@ sgx-tokens: build-manifest
 
 .PHONY: regression
 regression:
-	if test "$(SGX)" -eq 1; then \
-		$(RM) ltp-sgx.xml; \
-		$(MAKE) ltp-sgx.xml; \
-	else \
-		$(RM) ltp.xml; \
-		$(MAKE) ltp.xml; \
-	fi
+ifeq ($(SGX),"1")
+	$(RM) ltp-sgx.xml
+	$(MAKE) ltp-sgx.xml
+else
+	$(RM) ltp.xml
+	$(MAKE) ltp.xml
+endif
 
 %.xml: %.cfg ltp-bug-1248.cfg ltp-bug-1075.cfg $(LTPSCENARIO) $(target)
 	./contrib/conf_lint.py < $<
