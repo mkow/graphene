@@ -38,7 +38,7 @@ int shim_do_gettimeofday(struct __kernel_timeval* tv, struct __kernel_timezone* 
 time_t shim_do_time(time_t* tloc) {
     uint64_t time = DkSystemTimeQuery();
 
-    if (time == -1)
+    if (time == (uint64_t)-1)
         return -PAL_ERRNO();
 
     if (tloc && test_user_memory(tloc, sizeof(*tloc), true))
@@ -64,7 +64,7 @@ int shim_do_clock_gettime(clockid_t which_clock, struct timespec* tp) {
 
     uint64_t time = DkSystemTimeQuery();
 
-    if (time == -1)
+    if (time == (uint64_t)-1)
         return -PAL_ERRNO();
 
     tp->tv_sec  = time / 1000000;
