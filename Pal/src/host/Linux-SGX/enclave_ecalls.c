@@ -59,7 +59,7 @@ void handle_ecall(long ecall_index, void* ecall_args, void* exit_target, void* e
     if (ecall_index < 0 || ecall_index >= ECALL_NR)
         return;
 
-    if (!enclave_top) {
+    if (!g_enclave_top) {
         g_enclave_base = enclave_base_addr;
         g_enclave_top = enclave_base_addr + GET_ENCLAVE_TLS(enclave_size);
     }
