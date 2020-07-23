@@ -83,12 +83,12 @@ static inline struct enclave_tls* get_tcb_trts(void) {
 /* private to untrusted Linux PAL, unique to each untrusted thread */
 typedef struct pal_tcb_urts {
     struct pal_tcb_urts* self;
-    sgx_arch_tcs_t*     tcs;        /* TCS page of SGX corresponding to thread, for EENTER */
-    void*               stack;      /* bottom of stack, for later freeing when thread exits */
-    void*               alt_stack;  /* bottom of alt stack, for child thread to init alt stack */
-    atomic_ulong        eenter_cnt; /* # of EENTERs, corresponds to # of ECALLs */
-    atomic_ulong        eexit_cnt;  /* # of EEXITs, corresponds to # of OCALLs */
-    atomic_ulong        aex_cnt;    /* # of AEXs, corresponds to # of interrupts/signals */
+    sgx_arch_tcs_t*      tcs;        /* TCS page of SGX corresponding to thread, for EENTER */
+    void*                stack;      /* bottom of stack, for later freeing when thread exits */
+    void*                alt_stack;  /* bottom of alt stack, for child thread to init alt stack */
+    atomic_ulong         eenter_cnt; /* # of EENTERs, corresponds to # of ECALLs */
+    atomic_ulong         eexit_cnt;  /* # of EEXITs, corresponds to # of OCALLs */
+    atomic_ulong         aex_cnt;    /* # of AEXs, corresponds to # of interrupts/signals */
 } PAL_TCB_URTS;
 
 extern void pal_tcb_urts_init(PAL_TCB_URTS* tcb, void* stack, void* alt_stack);

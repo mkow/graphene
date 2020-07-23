@@ -285,12 +285,6 @@ int _DkStreamSecureSave(LIB_SSL_CONTEXT* ssl_ctx, const uint8_t** obuf, size_t* 
 
 #define PAL_ENCLAVE_INITIALIZED     0x0001ULL
 
-extern struct pal_enclave_config {
-    sgx_measurement_t mr_enclave;
-    sgx_attributes_t  enclave_attributes;
-    void *            enclave_key;
-} pal_enclave_config;
-
 #include <hex.h>
 
 #else
@@ -303,7 +297,7 @@ int sgx_create_process(const char* uri, int nargs, const char** args, int* strea
 # endif
 
 # define ARCH_VFORK()                                                       \
-    (pal_enclave.pal_sec.in_gdb ?                                           \
+    (g_pal_enclave.pal_sec.in_gdb ?                                         \
      INLINE_SYSCALL(clone, 4, CLONE_VM|CLONE_VFORK|SIGCHLD, 0, NULL, NULL) :\
      INLINE_SYSCALL(clone, 4, CLONE_VM|CLONE_VFORK, 0, NULL, NULL))
 #else
