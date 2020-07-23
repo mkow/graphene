@@ -53,7 +53,7 @@ uint64_t g_xsave_features = 0;
 uint32_t g_xsave_size = 0;
 //FXRSTOR only cares about the first 512 bytes, while
 //XRSTOR in compacted mode will ignore the first 512 bytes.
-const uint32_t xsave_reset_state[XSAVE_RESET_STATE_SIZE/sizeof(uint32_t)]
+const uint32_t g_xsave_reset_state[XSAVE_RESET_STATE_SIZE/sizeof(uint32_t)]
 __attribute__((aligned(PAL_XSTATE_ALIGN))) = {
     0x037F, 0, 0, 0, 0, 0, 0x1F80, 0xFFFF, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -93,5 +93,5 @@ void init_xsave_size(uint64_t xfrm) {
             g_xsave_size = xsave_size_table[i].size;
         }
     }
-    SGX_DBG(DBG_M, "xsave is enabled with xsave_size: %u\n", g_xsave_size);
+    SGX_DBG(DBG_M, "xsave is enabled with g_xsave_size: %u\n", g_xsave_size);
 }

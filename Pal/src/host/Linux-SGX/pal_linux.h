@@ -93,11 +93,11 @@ extern char __text_start, __text_end, __data_start, __data_end;
 typedef struct { char bytes[32]; } sgx_checksum_t;
 typedef struct { char bytes[16]; } sgx_stub_t;
 
-extern int xsave_enabled;
-extern uint64_t xsave_features;
-extern uint32_t xsave_size;
+extern int g_xsave_enabled;
+extern uint64_t g_xsave_features;
+extern uint32_t g_xsave_size;
 #define XSAVE_RESET_STATE_SIZE (512 + 64)  // 512 for legacy regs, 64 for xsave header
-extern const uint32_t xsave_reset_state[];
+extern const uint32_t g_xsave_reset_state[];
 
 void init_xsave_size(uint64_t xfrm);
 void save_xregs(PAL_XREGS_STATE* xsave_area);
