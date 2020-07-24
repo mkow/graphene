@@ -28,7 +28,7 @@ endif
 
 
 .PHONY: all
-all: $(BLENDER_DIR)/blender $(RUN_DIR)/blender.manifest $(RUN_DIR)/pal_loader $(DATA_DIR)/images
+all: $(BLENDER_DIR)/blender $(RUN_DIR)/blender.manifest $(RUN_DIR)/pal_loader | $(DATA_DIR)/images
 ifeq ($(SGX),1)
 all: $(RUN_DIR)/blender.manifest.sgx
 endif
@@ -66,7 +66,7 @@ $(RUN_DIR)/blender.manifest.sgx: $(BLENDER_DIR)/blender $(RUN_DIR)/blender.manif
 		-output $(RUN_DIR)/blender.token \
 		-sig $(RUN_DIR)/blender.sig
 
-$(RUN_DIR)/pal_loader:
+$(RUN_DIR)/pal_loader: | $(RUN_DIR)
 	ln -s $(GRAPHENE_DIR)/Runtime/pal_loader $@
 
 $(DATA_DIR)/images:
