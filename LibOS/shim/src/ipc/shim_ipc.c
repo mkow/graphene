@@ -42,6 +42,28 @@ struct shim_process cur_process;
 DEFINE_LISTP(shim_ipc_info);
 static LISTP_TYPE(shim_ipc_info) info_hlist[CLIENT_HASH_NUM];
 
+// TODO: remove static and move to reasonable .c
+__attribute__((unused))
+static const char* pal_type_names[] = {
+    [pal_type_file] = "pal_type_file",
+    [pal_type_pipe] = "pal_type_pipe",
+    [pal_type_pipesrv] = "pal_type_pipesrv",
+    [pal_type_pipecli] = "pal_type_pipecli",
+    [pal_type_pipeprv] = "pal_type_pipeprv",
+    [pal_type_dev] = "pal_type_dev",
+    [pal_type_dir] = "pal_type_dir",
+    [pal_type_tcp] = "pal_type_tcp",
+    [pal_type_tcpsrv] = "pal_type_tcpsrv",
+    [pal_type_udp] = "pal_type_udp",
+    [pal_type_udpsrv] = "pal_type_udpsrv",
+    [pal_type_process] = "pal_type_process",
+    [pal_type_thread] = "pal_type_thread",
+    [pal_type_mutex] = "pal_type_mutex",
+    [pal_type_event] = "pal_type_event",
+    [pal_type_eventfd] = "pal_type_eventfd",
+};
+
+
 int init_ipc(void) {
     int ret = 0;
 
@@ -87,6 +109,7 @@ static void __free_ipc_info(struct shim_ipc_info* info) {
     assert(locked(&ipc_info_lock));
 
     if (info->pal_handle) {
+        debug("%s:%d DkObjectClose(%p:%s)\n", __FUNCTION__, __LINE__, info->pal_handle, PAL_GET_TYPE_NAME(info->pal_handle));
         DkObjectClose(info->pal_handle);
         info->pal_handle = NULL;
     }

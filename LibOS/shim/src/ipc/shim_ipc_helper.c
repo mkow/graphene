@@ -74,6 +74,27 @@ static ipc_callback ipc_callbacks[] = {
     [IPC_MSG_SYSV_SEMRET]   = &ipc_sysv_semret_callback,
 };
 
+// TODO: remove static and move to reasonable .c
+__attribute__((unused))
+static const char* pal_type_names[] = {
+    [pal_type_file] = "pal_type_file",
+    [pal_type_pipe] = "pal_type_pipe",
+    [pal_type_pipesrv] = "pal_type_pipesrv",
+    [pal_type_pipecli] = "pal_type_pipecli",
+    [pal_type_pipeprv] = "pal_type_pipeprv",
+    [pal_type_dev] = "pal_type_dev",
+    [pal_type_dir] = "pal_type_dir",
+    [pal_type_tcp] = "pal_type_tcp",
+    [pal_type_tcpsrv] = "pal_type_tcpsrv",
+    [pal_type_udp] = "pal_type_udp",
+    [pal_type_udpsrv] = "pal_type_udpsrv",
+    [pal_type_process] = "pal_type_process",
+    [pal_type_thread] = "pal_type_thread",
+    [pal_type_mutex] = "pal_type_mutex",
+    [pal_type_event] = "pal_type_event",
+    [pal_type_eventfd] = "pal_type_eventfd",
+};
+
 static int init_self_ipc_port(void) {
     lock(&cur_process.lock);
 
@@ -211,6 +232,7 @@ static void __free_ipc_port(struct shim_ipc_port* port) {
     assert(locked(&ipc_helper_lock));
 
     if (port->pal_handle) {
+        debug("%s:%d DkObjectClose(%p)\n", __FUNCTION__, __LINE__, port->pal_handle);
         DkObjectClose(port->pal_handle);
         port->pal_handle = NULL;
     }
@@ -310,8 +332,8 @@ static void __del_ipc_port(struct shim_ipc_port* port) {
 }
 
 void add_ipc_port(struct shim_ipc_port* port, IDTYPE vmid, IDTYPE type, port_fini fini) {
-    debug("Adding port %p (handle %p) for process %u (type=%04x)\n", port, port->pal_handle,
-          port->vmid & 0xFFFF, type);
+    debug("Adding port %p (handle %p:%s) for process %u (type=%04x)\n", port, port->pal_handle,
+          PAL_GET_TYPE_NAME(port->pal_handle), port->vmid & 0xFFFF, type);
 
     lock(&ipc_helper_lock);
     __add_ipc_port(port, vmid, type, fini);
@@ -320,7 +342,8 @@ void add_ipc_port(struct shim_ipc_port* port, IDTYPE vmid, IDTYPE type, port_fin
 
 void add_ipc_port_by_id(IDTYPE vmid, PAL_HANDLE hdl, IDTYPE type, port_fini fini,
                         struct shim_ipc_port** portptr) {
-    debug("Adding port (handle %p) for process %u (type %04x)\n", hdl, vmid & 0xFFFF, type);
+    debug("Adding port (handle %p:%s) for process %u (type %04x)\n", hdl, PAL_GET_TYPE_NAME(hdl),
+          vmid & 0xFFFF, type);
 
     struct shim_ipc_port* port = NULL;
     if (portptr)
@@ -735,14 +758,24 @@ noreturn static void shim_ipc_helper(void* dummy) {
             ret_events[ports_cnt + 1] = 0;
             ports_cnt++;
 
-            debug("Listening to process %u on port %p (handle %p, type %04x)\n",
-                  port->vmid & 0xFFFF, port, port->pal_handle, port->type);
+            debug("Listening to process %u on port %p (handle %p:%s, type %04x)\n",
+                  port->vmid & 0xFFFF, port, port->pal_handle, PAL_GET_TYPE_NAME(port->pal_handle), port->type);
+        }
+
+        for (size_t i = 0; i < ports_cnt + 1; i++) {
+            if (UNKNOWN_HANDLE(pals[i])) {
+                debug("XXX: %s:%d (i: %lu)\n", __FUNCTION__, __LINE__, i);
+            }
         }
 
         unlock(&ipc_helper_lock);
 
         /* wait on collected ports' PAL handles + install_new_event_pal */
         PAL_BOL polled = DkStreamsWaitEvents(ports_cnt + 1, pals, pal_events, ret_events, NO_TIMEOUT);
+        if (!polled && PAL_ERRNO() == 22) {
+            debug("XXX: %s:%d (errno: %ld)\n", __FUNCTION__, __LINE__, PAL_ERRNO());
+            DkProcessExit(1);
+        }
 
         for (size_t i = 0; polled && i < ports_cnt + 1; i++) {
             if (ret_events[i]) {

@@ -113,6 +113,7 @@ enum {
 
 #define PAL_IDX_POISON          ((PAL_IDX)-1) /* PAL identifier poison value */
 #define PAL_GET_TYPE(h)         (HANDLE_HDR(h)->type)
+#define PAL_GET_TYPE_NAME(h)    (UNKNOWN_HANDLE(h) ? "<unknown>" : pal_type_names[HANDLE_HDR(h)->type])
 #define PAL_CHECK_TYPE(h, t)    (PAL_GET_TYPE(h) == pal_type_##t)
 #define UNKNOWN_HANDLE(handle)  (PAL_GET_TYPE(handle) >= PAL_HANDLE_TYPE_BOUND)
 

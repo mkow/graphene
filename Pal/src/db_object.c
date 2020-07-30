@@ -88,6 +88,8 @@ PAL_BOL DkStreamsWaitEvents(PAL_NUM count, PAL_HANDLE* handle_array, PAL_FLG* ev
     for (PAL_NUM i = 0; i < count; i++) {
         if (UNKNOWN_HANDLE(handle_array[i])) {
             _DkRaiseFailure(PAL_ERROR_INVAL);
+            pal_printf("XXX: %s:%d (%d)\n", __FUNCTION__, __LINE__, (int)i);
+            pal_printf("^^^: %d\n", handle_array[i]->hdr.type);
             LEAVE_PAL_CALL_RETURN(PAL_FALSE);
         }
     }
