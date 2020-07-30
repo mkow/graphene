@@ -704,6 +704,7 @@ int create_process_and_send_checkpoint(migrate_func_t migrate_func, struct shim_
         add_ipc_port_by_id(child_vmid, pal_process,
                            IPC_PORT_DIRECTCHILD | IPC_PORT_LISTEN | IPC_PORT_KEEPALIVE,
                            &ipc_port_with_child_fini, NULL);
+        pal_process = NULL; /* we lost ownership of this handle */
     }
 
     /* remote child thread has VMID of the child process (note that we don't care about execve case
