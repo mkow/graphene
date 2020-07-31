@@ -592,21 +592,36 @@ noreturn void* shim_init(int argc, void* args) {
     }
 
     debug("shim process initialized\n");
+    debug("%s:%d\n", __FUNCTION__, __LINE__);
 
-    if (thread_start_event)
+    if (thread_start_event) {
+        debug("%s:%d\n", __FUNCTION__, __LINE__);
         DkEventSet(thread_start_event);
-
-    shim_tcb_t * cur_tcb = shim_get_tcb();
-    struct shim_thread * cur_thread = (struct shim_thread *) cur_tcb->tp;
-
-    if (cur_tcb->context.regs && shim_context_get_sp(&cur_tcb->context)) {
-        vdso_map_migrate();
-        restore_context(&cur_tcb->context);
     }
 
-    if (cur_thread->exec)
+    debug("%s:%d\n", __FUNCTION__, __LINE__);
+    shim_tcb_t * cur_tcb = shim_get_tcb();
+    debug("%s:%d\n", __FUNCTION__, __LINE__);
+    struct shim_thread * cur_thread = (struct shim_thread *) cur_tcb->tp;
+    debug("%s:%d\n", __FUNCTION__, __LINE__);
+
+    if (cur_tcb->context.regs && shim_context_get_sp(&cur_tcb->context)) {
+        debug("%s:%d\n", __FUNCTION__, __LINE__);
+        vdso_map_migrate();
+        debug("%s:%d\n", __FUNCTION__, __LINE__);
+        restore_context(&cur_tcb->context);
+        debug("%s:%d\n", __FUNCTION__, __LINE__);
+    }
+
+    debug("%s:%d\n", __FUNCTION__, __LINE__);
+    if (cur_thread->exec) {
+        debug("%s:%d\n", __FUNCTION__, __LINE__);
         execute_elf_object(cur_thread->exec, new_argp, new_auxv);
+        debug("%s:%d\n", __FUNCTION__, __LINE__);
+    }
+    debug("%s:%d\n", __FUNCTION__, __LINE__);
     shim_do_exit(0);
+    debug("%s:%d\n", __FUNCTION__, __LINE__);
 }
 
 static int create_unique (int (*mkname) (char *, size_t, void *),
