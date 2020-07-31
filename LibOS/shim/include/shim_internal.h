@@ -725,6 +725,4 @@ void release_clear_child_tid(int* clear_child_tid);
 
 void delete_from_epoll_handles(struct shim_handle* handle);
 
-extern struct new_utsname g_current_uname;
-
 #endif /* _SHIM_INTERNAL_H_ */
