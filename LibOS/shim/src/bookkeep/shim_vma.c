@@ -905,6 +905,8 @@ int bkeep_mmap_any_in_range(void* _bottom_addr, void* _top_addr, size_t length, 
                             void** ret_val_ptr) {
     assert(_bottom_addr < _top_addr);
 
+    debug("%s:%d _bottom_addr:%p, _top_addr:%p, length:%p\n", __FUNCTION__, __LINE__, (void*)_bottom_addr, (void*)_top_addr, (void*)length);
+
     if (!length || !IS_ALLOC_ALIGNED(length)) {
         return -EINVAL;
     }
