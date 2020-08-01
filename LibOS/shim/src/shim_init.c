@@ -609,7 +609,7 @@ noreturn void* shim_init(int argc, void* args) {
 
     if (cur_thread->exec) {
         debug("%s:%d\n", __FUNCTION__, __LINE__);
-        *(uint16_t*)0x001da68f = 0xFEEB;
+        // *(uint16_t*)0x001da68f = 0xFEEB;
         execute_elf_object(cur_thread->exec, new_argp, new_auxv);
         debug("%s:%d\n", __FUNCTION__, __LINE__);
     }
