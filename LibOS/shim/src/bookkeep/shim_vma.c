@@ -1001,10 +1001,13 @@ int bkeep_mmap_any_aslr(size_t length, int prot, int flags, struct shim_handle* 
     ret = bkeep_mmap_any_in_range(PAL_CB(user_address.start), g_aslr_addr_top, length, prot, flags,
                                   file, offset, comment, ret_val_ptr);
     if (ret >= 0) {
+        debug("%s:%d ret1: %d, %p\n", __FUNCTION__, __LINE__, ret, (void*)*ret_val_ptr);
         return ret;
     }
 
-    return bkeep_mmap_any(length, prot, flags, file, offset, comment, ret_val_ptr);
+    ret = bkeep_mmap_any(length, prot, flags, file, offset, comment, ret_val_ptr);
+    debug("%s:%d ret2: %d, %p\n", __FUNCTION__, __LINE__, ret, (void*)*ret_val_ptr);
+    return ret;
 }
 
 static void dump_vma(struct shim_vma_info* vma_info, struct shim_vma* vma) {
