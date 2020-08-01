@@ -514,6 +514,8 @@ static struct link_map* __map_elf_object(struct shim_handle* file, const void* f
             mappref = (ElfW(Addr))addr;
         }
 
+        debug("%s:%d mappref: %p\n", __FUNCTION__, __LINE__, mappref);
+
         l->l_map_start = mappref;
         l->l_map_end   = l->l_map_start + maplength;
         l->l_addr      = l->l_map_start - c->mapstart;
