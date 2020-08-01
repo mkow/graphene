@@ -997,6 +997,7 @@ int bkeep_mmap_any(size_t length, int prot, int flags, struct shim_handle* file,
 int bkeep_mmap_any_aslr(size_t length, int prot, int flags, struct shim_handle* file, off_t offset,
                         const char* comment, void** ret_val_ptr) {
     int ret;
+    debug("%s:%d bkeep_mmap_any_aslr(len=%p)\n", __FUNCTION__, __LINE__, (void*)length);
     ret = bkeep_mmap_any_in_range(PAL_CB(user_address.start), g_aslr_addr_top, length, prot, flags,
                                   file, offset, comment, ret_val_ptr);
     if (ret >= 0) {
