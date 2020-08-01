@@ -1587,10 +1587,13 @@ noreturn void execute_elf_object(struct shim_handle* exec, void* argp, ElfW(auxv
     ElfW(Addr) entry = interp_map ? interp_map->l_entry : exec_map->l_entry;
 
     /* Ready to start execution, re-enable preemption. */
+    debug("%s:%d\n", __FUNCTION__, __LINE__);
     shim_tcb_t* tcb = shim_get_tcb();
     __enable_preempt(tcb);
 
+    debug("%s:%d\n", __FUNCTION__, __LINE__);
     CALL_ELF_ENTRY(entry, argp);
+    debug("%s:%d\n", __FUNCTION__, __LINE__);
 
     while (true)
         /* nothing */;
