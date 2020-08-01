@@ -949,6 +949,8 @@ static int __load_elf_object(struct shim_handle* file, void* addr, int type,
     char* hdr = addr;
     int len = 0, ret = 0;
 
+    debug("%s:%d loading ELF object at %p\n", __FUNCTION__, __LINE__, addr);
+
     if (type == OBJECT_LOAD || type == OBJECT_REMAP) {
         hdr = __alloca(FILEBUF_SIZE);
         if ((ret = __load_elf_header(file, hdr, &len)) < 0)
@@ -1402,8 +1404,8 @@ static int vdso_map_init(void) {
 
     memcpy(addr, &vdso_so, vdso_so_size);
     memset(addr + vdso_so_size, 0, ALLOC_ALIGN_UP(vdso_so_size) - vdso_so_size);
-    ret = __load_elf_object(NULL, addr, OBJECT_VDSO, NULL);
-    debug("%s:%d (ret = %d)\n", __FUNCTION__, __LINE__, ret);
+    // TODO: error checking
+    __load_elf_object(NULL, addr, OBJECT_VDSO, NULL);
     vdso_map->l_name = "vDSO";
 
     for (size_t i = 0; i < ARRAY_SIZE(vsyms); i++) {
