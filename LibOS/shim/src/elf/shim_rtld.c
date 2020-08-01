@@ -1402,7 +1402,8 @@ static int vdso_map_init(void) {
 
     memcpy(addr, &vdso_so, vdso_so_size);
     memset(addr + vdso_so_size, 0, ALLOC_ALIGN_UP(vdso_so_size) - vdso_so_size);
-    __load_elf_object(NULL, addr, OBJECT_VDSO, NULL);
+    ret = __load_elf_object(NULL, addr, OBJECT_VDSO, NULL);
+    debug("%s:%d (ret = %d)\n", __FUNCTION__, __LINE__, ret);
     vdso_map->l_name = "vDSO";
 
     for (size_t i = 0; i < ARRAY_SIZE(vsyms); i++) {
