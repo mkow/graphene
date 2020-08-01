@@ -560,6 +560,7 @@ int init_vma(void) {
                 return -convert_pal_errno(-ret);
             }
 
+            debug("gap: 0x%lx\n", gap);
             /* Resulting distribution is not ideal, but it should not be an issue here. */
             gap = ALLOC_ALIGN_DOWN(gap % gap_max_size);
             g_aslr_addr_top = (char*)g_aslr_addr_top - gap;
