@@ -949,7 +949,7 @@ static int __load_elf_object(struct shim_handle* file, void* addr, int type,
     char* hdr = addr;
     int len = 0, ret = 0;
 
-    debug("%s:%d loading ELF object at %p\n", __FUNCTION__, __LINE__, addr);
+    debug("%s:%d __load_elf_object(%p, %p, %d, %p)\n", __FUNCTION__, __LINE__, file, addr, type, remap);
 
     if (type == OBJECT_LOAD || type == OBJECT_REMAP) {
         hdr = __alloca(FILEBUF_SIZE);
