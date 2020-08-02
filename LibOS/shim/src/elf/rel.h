@@ -16,7 +16,7 @@ typedef Elf64_Xword d_tag_utype, d_val_utype;
 #endif
 
 static inline unsigned int asdf(struct link_map* l, void* addr) {
-    debug("Skipping relocation at %p (%s)\n", addr, l_name);
+    debug("Skipping relocation at %p (%s)\n", addr, l->l_name);
 }
 
 #define IN_RANGE(l, addr) \
