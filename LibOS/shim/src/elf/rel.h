@@ -29,8 +29,8 @@ static inline uintptr_t not_skipped(struct link_map* l, void* addr, void* new_ad
     ((ElfW(Addr))(addr) >= (l)->l_map_start && (ElfW(Addr))(addr) < (l)->l_map_end)
 
 #define RELOCATE(l, addr)                                          \
-    ((__typeof__(addr))(IN_RANGE(l, addr) ? skipped(l, (void*)addr) + (ElfW(Addr))(addr) \
-                                            : (ElfW(Addr))(addr) + (ElfW(Addr))((l)->l_addr)))
+    ((__typeof__(addr))(IN_RANGE(l, addr) ? skipped(l, (void*)(addr)) + (ElfW(Addr))(addr) \
+                                            : not_skipped(l, (void*)(addr), (ElfW(Addr))(addr) + (ElfW(Addr))((l)->l_addr))))
 
 #include "shim_dl-machine.h"
 
