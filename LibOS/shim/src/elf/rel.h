@@ -16,7 +16,7 @@ typedef Elf64_Xword d_tag_utype, d_val_utype;
 #endif
 
 static inline uintptr_t skipped(struct link_map* l, void* addr) {
-    debug("Skipping relocation at %p (%s)\n", addr, l->l_name);
+    debug("Skipping relocation for %p (%s)\n", addr, l->l_name);
     return 0;
 }
 
