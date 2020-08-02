@@ -23,8 +23,8 @@ unsigned int static inline asdf(struct link_map* l, void* addr) {
     ((ElfW(Addr))(addr) >= (l)->l_map_start && (ElfW(Addr))(addr) < (l)->l_map_end)
 
 #define RELOCATE(l, addr)                                          \
-    ((__typeof__(addr))(IN_RANGE((l), (addr)) ? (asdf() + ElfW(Addr))(addr) \
-                                              : (ElfW(Addr))(addr) + (ElfW(Addr))((l)->l_addr)))
+    ((__typeof__(addr))(IN_RANGE(l, addr) ? (asdf(l, addr) + ElfW(Addr))(addr) \
+                                            : (ElfW(Addr))(addr) + (ElfW(Addr))((l)->l_addr)))
 
 #include "shim_dl-machine.h"
 
