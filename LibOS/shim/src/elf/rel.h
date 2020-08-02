@@ -15,7 +15,7 @@ typedef Elf32_Word d_tag_utype, d_val_utype;
 typedef Elf64_Xword d_tag_utype, d_val_utype;
 #endif
 
-unsigned int static inline asdf(struct link_map* l, void* addr) {
+static inline unsigned int asdf(struct link_map* l, void* addr) {
     debug("Skipping relocation at %p (%s)\n", addr, l_name);
 }
 
