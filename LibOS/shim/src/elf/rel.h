@@ -15,16 +15,21 @@ typedef Elf32_Word d_tag_utype, d_val_utype;
 typedef Elf64_Xword d_tag_utype, d_val_utype;
 #endif
 
-static inline unsigned int asdf(struct link_map* l, void* addr) {
+static inline uintptr_t skipped(struct link_map* l, void* addr) {
     debug("Skipping relocation at %p (%s)\n", addr, l->l_name);
     return 0;
+}
+
+static inline uintptr_t not_skipped(struct link_map* l, void* addr, void* new_addr) {
+    debug("Relocating %p -> %p (%s)\n", addr, new_addr, l->l_name);
+    return (uintptr_t)new_addr;
 }
 
 #define IN_RANGE(l, addr) \
     ((ElfW(Addr))(addr) >= (l)->l_map_start && (ElfW(Addr))(addr) < (l)->l_map_end)
 
 #define RELOCATE(l, addr)                                          \
-    ((__typeof__(addr))(IN_RANGE(l, addr) ? asdf(l, (void*)addr) + (ElfW(Addr))(addr) \
+    ((__typeof__(addr))(IN_RANGE(l, addr) ? skipped(l, (void*)addr) + (ElfW(Addr))(addr) \
                                             : (ElfW(Addr))(addr) + (ElfW(Addr))((l)->l_addr)))
 
 #include "shim_dl-machine.h"
