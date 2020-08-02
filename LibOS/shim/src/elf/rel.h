@@ -1,3 +1,4 @@
+#include "shim_internal.h"
 #include "elf.h"
 
 #ifndef VERSYMIDX
@@ -14,11 +15,15 @@ typedef Elf32_Word d_tag_utype, d_val_utype;
 typedef Elf64_Xword d_tag_utype, d_val_utype;
 #endif
 
+unsigned int static inline asdf(struct link_map* l, void* addr) {
+    debug("Skipping relocation at %p (%s)\n", addr, l_name);
+}
+
 #define IN_RANGE(l, addr) \
     ((ElfW(Addr))(addr) >= (l)->l_map_start && (ElfW(Addr))(addr) < (l)->l_map_end)
 
 #define RELOCATE(l, addr)                                          \
-    ((__typeof__(addr))(IN_RANGE((l), (addr)) ? (ElfW(Addr))(addr) \
+    ((__typeof__(addr))(IN_RANGE((l), (addr)) ? (asdf() + ElfW(Addr))(addr) \
                                               : (ElfW(Addr))(addr) + (ElfW(Addr))((l)->l_addr)))
 
 #include "shim_dl-machine.h"

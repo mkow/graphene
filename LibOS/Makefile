@@ -29,6 +29,8 @@ endif
 GLIBC_TARGET = $(addprefix $(BUILD_DIR)/, $(GLIBC_LIBS))
 GLIBC_RUNTIME = $(addprefix $(RUNTIME_DIR)/, $(notdir $(GLIBC_TARGET)))
 
+# "The default value of CFLAGS is ‘-g -O2’, and the GNU C Library cannot be compiled without optimization"
+# (from glibc manual)
 GLIBC_CFLAGS = -O2 -Wp,-U_FORTIFY_SOURCE -fno-stack-protector -Wno-unused-value
 ifeq ($(DEBUG),1)
 	GLIBC_CFLAGS += -g

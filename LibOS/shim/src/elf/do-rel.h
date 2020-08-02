@@ -4,8 +4,7 @@
 /*
  * do-rel.c
  *
- * This file contains architecture-independent codes for relocating ELF
- * binaries.
+ * This file contains architecture-independent code for relocating ELF binaries.
  * Most of the source codes are imported from GNU C library.
  */
 
@@ -69,52 +68,6 @@ static void __attribute__((unused)) elf_dynamic_redo_rel(struct link_map* l) {
     for (int i = 0; i < l->nlinksyms; i++)
         elf_machine_rel(l, l->linksyms[i].rel, l->linksyms[i].sym, l->linksyms[i].reloc);
 }
-
-#if 0
-static void inline elf_copy_rel (struct link_map * l1, struct link_map * l2,
-                                 int reloc, int reloc_sz)
-{
-    if (!l1->l_info[reloc] || !l2->l_info[reloc])
-        return;
-
-    ElfW(Sym) *  symtab1 = (void *) D_PTR (l1->l_info[DT_SYMTAB]);
-    const char * strtab1 = (void *) D_PTR (l1->l_info[DT_STRTAB]);
-    ElfW(Sym) *  symtab2 = (void *) D_PTR (l2->l_info[DT_SYMTAB]);
-    const char * strtab2 = (void *) D_PTR (l2->l_info[DT_STRTAB]);
-
-    ElfW(Rel) * r1, * r2, * end1, * end2;
-
-    r1 = (ElfW(Rel) *) D_PTR (l1->l_info[reloc]);
-    end1 = ((void *) r1 + l1->l_info[reloc_sz]->d_un.d_val);
-    r1 += l1->l_info[RELCOUNT_IDX] ? l1->l_info[RELCOUNT_IDX]->d_un.d_val : 0;
-
-    r2 = (ElfW(Rel) *) D_PTR (l2->l_info[reloc]);
-    end2 = ((void *) r2 + l2->l_info[reloc_sz]->d_un.d_val);
-    r2 += l2->l_info[RELCOUNT_IDX] ? l2->l_info[RELCOUNT_IDX]->d_un.d_val : 0;
-
-    for (; r1 < end1 && r2 < end2; ++r1, ++r2) {
-        debug("copy %s from %s\n",
-              strtab1 + symtab1[ELFW(R_SYM) (r1->r_info)].st_name,
-              strtab2 + symtab2[ELFW(R_SYM) (r2->r_info)].st_name);
-
-        r1->r_info = r2->r_info;
-
-        ElfW(Addr) * reladdr1 = (void *) l1->l_addr + r1->r_offset;
-        ElfW(Addr) * reladdr2 = (void *) l2->l_addr + r2->r_offset;
-
-        if (*reladdr1 != *reladdr2)
-            *reladdr1 = *reladdr2;
-    }
-}
-
-/* copy the relocation done by PAL */
-static void __attribute__((unused))
-elf_dynamic_copy_rel (struct link_map * l1, struct link_map * l2)
-{
-    elf_copy_rel(l1, l2, dt_reloc, dt_reloc_sz);
-    elf_copy_rel(l1, l2, DT_JMPREL, DT_PLTRELSZ);
-}
-#endif
 
 #undef elf_dynamic_do_rel
 #undef Rel
