@@ -748,7 +748,7 @@ int receive_checkpoint_and_restore(struct checkpoint_hdr* hdr) {
     void* base = hdr->addr;
     PAL_PTR mapaddr = (PAL_PTR)ALLOC_ALIGN_DOWN_PTR(base);
     PAL_NUM mapsize = (PAL_PTR)ALLOC_ALIGN_UP_PTR(base + hdr->size) - mapaddr;
-    debug("XXX %s:%d\n", __FUNCTION__, __LINE__);
+    SYS_PRINTF("XXX %s:%d\n", __FUNCTION__, __LINE__);
 
     /* first try allocating at address used by parent process */
     if (PAL_CB(user_address.start) <= mapaddr && mapaddr + mapsize <= PAL_CB(user_address.end)) {
@@ -768,7 +768,7 @@ int receive_checkpoint_and_restore(struct checkpoint_hdr* hdr) {
         ret = bkeep_mmap_any(ALLOC_ALIGN_UP(hdr->size), PROT_READ|PROT_WRITE, CP_MMAP_FLAGS, NULL,
                              0, "cpstore", &base);
         if (ret < 0) {
-            debug("XXX %s:%d\n", __FUNCTION__, __LINE__);
+            SYS_PRINTF("XXX %s:%d\n", __FUNCTION__, __LINE__);
             return ret;
         }
 
@@ -776,12 +776,12 @@ int receive_checkpoint_and_restore(struct checkpoint_hdr* hdr) {
         mapsize = (PAL_NUM)ALLOC_ALIGN_UP(hdr->size);
     }
 
-    debug("checkpoint mapped at %p-%p\n", base, base + hdr->size);
+    SYS_PRINTF("checkpoint mapped at %p-%p\n", base, base + hdr->size);
 
     mapped = DkVirtualMemoryAlloc(mapaddr, mapsize, 0, PAL_PROT_READ | PAL_PROT_WRITE);
     if (!mapped) {
         ret = -PAL_ERRNO();
-        debug("XXX %s:%d\n", __FUNCTION__, __LINE__);
+        SYS_PRINTF("XXX %s:%d\n", __FUNCTION__, __LINE__);
         goto out;
     }
     assert(mapaddr == mapped);
@@ -799,18 +799,18 @@ int receive_checkpoint_and_restore(struct checkpoint_hdr* hdr) {
             if (PAL_ERRNO() == EINTR || PAL_ERRNO() == EAGAIN || PAL_ERRNO() == EWOULDBLOCK)
                 continue;
             ret = -PAL_ERRNO();
-            debug("XXX %s:%d\n", __FUNCTION__, __LINE__);
+            SYS_PRINTF("XXX %s:%d\n", __FUNCTION__, __LINE__);
             goto out;
         }
 
         total_bytes += bytes;
     }
 
-    debug("read checkpoint of %lu bytes from parent\n", total_bytes);
+    SYS_PRINTF("read checkpoint of %lu bytes from parent\n", total_bytes);
 
     ret = receive_handles_on_stream(hdr, base, rebase);
     if (ret < 0) {
-        debug("XXX %s:%d\n", __FUNCTION__, __LINE__);
+        SYS_PRINTF("XXX %s:%d\n", __FUNCTION__, __LINE__);
         goto out;
     }
 
@@ -819,7 +819,7 @@ int receive_checkpoint_and_restore(struct checkpoint_hdr* hdr) {
 
     ret = restore_checkpoint(hdr, (uintptr_t)base);
     if (ret < 0) {
-        debug("XXX %s:%d\n", __FUNCTION__, __LINE__);
+        SYS_PRINTF("XXX %s:%d\n", __FUNCTION__, __LINE__);
         goto out;
     }
 
@@ -835,6 +835,6 @@ out:
         if (mapaddr)
             bkeep_remove_tmp_vma(tmp_vma);
     }
-    debug("XXX %s:%d\n", __FUNCTION__, __LINE__);
+    SYS_PRINTF("XXX %s:%d\n", __FUNCTION__, __LINE__);
     return ret;
 }
