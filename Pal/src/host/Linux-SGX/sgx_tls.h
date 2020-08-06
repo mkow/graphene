@@ -7,7 +7,7 @@
 
 struct untrusted_area {
     void* mem;
-    uint64_t size;
+    size_t size;
     uint64_t in_use;
     bool valid;
 };

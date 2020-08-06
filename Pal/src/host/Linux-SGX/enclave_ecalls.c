@@ -85,8 +85,7 @@ void handle_ecall(long ecall_index, void* ecall_args, void* exit_target, void* e
             return;
         }
 
-        ms_ecall_enclave_start_t * ms =
-                (ms_ecall_enclave_start_t *) ecall_args;
+        ms_ecall_enclave_start_t* ms = (ms_ecall_enclave_start_t*)ecall_args;
 
         if (!ms || !sgx_is_completely_outside_enclave(ms, sizeof(*ms))) {
             return;
@@ -95,14 +94,18 @@ void handle_ecall(long ecall_index, void* ecall_args, void* exit_target, void* e
         if (verify_and_init_rpc_queue(READ_ONCE(ms->rpc_queue)))
             return;
 
+        struct pal_sec* pal_sec = READ_ONCE(ms->ms_sec_info);
+        if (!pal_sec || !sgx_is_completely_outside_enclave(pal_sec, sizeof(*pal_sec)))
+            return;
+
         /* xsave size must be initialized early */
-        init_xsave_size(READ_ONCE(READ_ONCE(ms->ms_sec_info)->enclave_attributes.xfrm));
+        init_xsave_size(READ_ONCE(pal_sec->enclave_attributes.xfrm));
 
         /* pal_linux_main is responsible to check the passed arguments */
         pal_linux_main(READ_ONCE(ms->ms_libpal_uri), READ_ONCE(ms->ms_libpal_uri_len),
                        READ_ONCE(ms->ms_args), READ_ONCE(ms->ms_args_size),
                        READ_ONCE(ms->ms_env), READ_ONCE(ms->ms_env_size),
-                       READ_ONCE(ms->ms_sec_info));
+                       pal_sec);
     } else {
         // ENCLAVE_START already called (maybe successfully, maybe not), so
         // only valid ecall is THREAD_START.
