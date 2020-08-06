@@ -1,7 +1,9 @@
+#include <stdalign.h>
+
+#include "api.h"
 #include "pal_linux.h"
 #include "pal_security.h"
 #include "pal_internal.h"
-#include <api.h>
 
 #include "ecall_types.h"
 #include "enclave_ecalls.h"
@@ -99,7 +101,14 @@ void handle_ecall(long ecall_index, void* ecall_args, void* exit_target, void* e
             return;
 
         /* xsave size must be initialized early */
-        init_xsave_size(READ_ONCE(pal_sec->enclave_attributes.xfrm));
+        /* We take it from a trusted source - EREPORT result */
+        alignas(512) sgx_target_info_t targetinfo;
+        alignas(128) char reportdata[64] = { 0 };
+        alignas(512) sgx_report_t report;
+        memset(&report, 0, sizeof(report));
+        memset(&target_info, 0, sizeof(target_info));
+        sgx_report(&target_info, &report_data, &report);
+        init_xsave_size(report.body.attributes.xfrm);
 
         /* pal_linux_main is responsible to check the passed arguments */
         pal_linux_main(READ_ONCE(ms->ms_libpal_uri), READ_ONCE(ms->ms_libpal_uri_len),
