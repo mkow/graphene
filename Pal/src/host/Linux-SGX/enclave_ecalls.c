@@ -102,9 +102,9 @@ void handle_ecall(long ecall_index, void* ecall_args, void* exit_target, void* e
 
         /* xsave size must be initialized early */
         /* We take it from a trusted source - EREPORT result */
-        /*alignas(512)*/ struct sgx_target_info_t target_info;
-        /*alignas(128)*/ char report_data[64] = { 0 };
-        /*alignas(512)*/ struct sgx_report_t report;
+        __sgx_mem_aligned struct sgx_target_info_t target_info;
+        alignas(128) char report_data[64] = { 0 };
+        __sgx_mem_aligned struct sgx_report_t report;
         memset(&report, 0, sizeof(report));
         memset(&target_info, 0, sizeof(target_info));
         sgx_report(&target_info, &report_data, &report);
