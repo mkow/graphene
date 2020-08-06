@@ -1,13 +1,13 @@
 #include <stdalign.h>
 
 #include "api.h"
-#include "pal_linux.h"
-#include "pal_security.h"
-#include "pal_internal.h"
-
 #include "ecall_types.h"
 #include "enclave_ecalls.h"
+#include "pal_internal.h"
+#include "pal_linux.h"
+#include "pal_security.h"
 #include "rpc_queue.h"
+#include "sgx_arch.h"
 
 #define SGX_CAST(type, item) ((type)(item))
 
