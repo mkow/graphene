@@ -748,6 +748,7 @@ int receive_checkpoint_and_restore(struct checkpoint_hdr* hdr) {
     void* base = hdr->addr;
     PAL_PTR mapaddr = (PAL_PTR)ALLOC_ALIGN_DOWN_PTR(base);
     PAL_NUM mapsize = (PAL_PTR)ALLOC_ALIGN_UP_PTR(base + hdr->size) - mapaddr;
+    debug("XXX %s:%d\n", __FUNCTION__, __LINE__);
 
     /* first try allocating at address used by parent process */
     if (PAL_CB(user_address.start) <= mapaddr && mapaddr + mapsize <= PAL_CB(user_address.end)) {
