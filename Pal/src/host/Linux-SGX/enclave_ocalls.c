@@ -1079,7 +1079,7 @@ ssize_t ocall_recv(int sockfd, void* buf, size_t count, struct sockaddr* addr, s
         }
 
         if (control && controllen) {
-            size_t untrusted_controllen = READ_ONCE(ms->ms_addrlen);
+            size_t untrusted_controllen = READ_ONCE(ms->ms_controllen);
             bool copied = sgx_copy_to_enclave(control, controllen, READ_ONCE(ms->ms_control),
                                               untrusted_controllen);
             if (!copied) {
