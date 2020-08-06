@@ -767,6 +767,7 @@ int receive_checkpoint_and_restore(struct checkpoint_hdr* hdr) {
         ret = bkeep_mmap_any(ALLOC_ALIGN_UP(hdr->size), PROT_READ|PROT_WRITE, CP_MMAP_FLAGS, NULL,
                              0, "cpstore", &base);
         if (ret < 0) {
+            debug("XXX %s:%d\n", __FUNCTION__, __LINE__);
             return ret;
         }
 
@@ -779,6 +780,7 @@ int receive_checkpoint_and_restore(struct checkpoint_hdr* hdr) {
     mapped = DkVirtualMemoryAlloc(mapaddr, mapsize, 0, PAL_PROT_READ | PAL_PROT_WRITE);
     if (!mapped) {
         ret = -PAL_ERRNO();
+        debug("XXX %s:%d\n", __FUNCTION__, __LINE__);
         goto out;
     }
     assert(mapaddr == mapped);
@@ -796,6 +798,7 @@ int receive_checkpoint_and_restore(struct checkpoint_hdr* hdr) {
             if (PAL_ERRNO() == EINTR || PAL_ERRNO() == EAGAIN || PAL_ERRNO() == EWOULDBLOCK)
                 continue;
             ret = -PAL_ERRNO();
+            debug("XXX %s:%d\n", __FUNCTION__, __LINE__);
             goto out;
         }
 
@@ -806,6 +809,7 @@ int receive_checkpoint_and_restore(struct checkpoint_hdr* hdr) {
 
     ret = receive_handles_on_stream(hdr, base, rebase);
     if (ret < 0) {
+        debug("XXX %s:%d\n", __FUNCTION__, __LINE__);
         goto out;
     }
 
@@ -814,6 +818,7 @@ int receive_checkpoint_and_restore(struct checkpoint_hdr* hdr) {
 
     ret = restore_checkpoint(hdr, (uintptr_t)base);
     if (ret < 0) {
+        debug("XXX %s:%d\n", __FUNCTION__, __LINE__);
         goto out;
     }
 
@@ -829,5 +834,6 @@ out:
         if (mapaddr)
             bkeep_remove_tmp_vma(tmp_vma);
     }
+    debug("XXX %s:%d\n", __FUNCTION__, __LINE__);
     return ret;
 }
