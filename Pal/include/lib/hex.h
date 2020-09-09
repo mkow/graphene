@@ -35,6 +35,8 @@ static inline char* __bytes2hexstr(void* hex, size_t size, char* str, size_t len
 
 #define IS_CHAR_ARRAY(arg) (_Generic((arg), char*: 1, default: 0) && \
                             _Generic(&(arg), char**: 0, default: 1))
+#define IS_UINT8_ARRAY(arg) (_Generic((arg), uint8_t*: 1, default: 0) && \
+                             _Generic(&(arg), uint8_t**: 0, default: 1))
 
 static inline int8_t hex2dec(char c) {
     if (c >= 'A' && c <= 'F')
@@ -51,8 +53,9 @@ static inline int8_t hex2dec(char c) {
  * BYTES2HEXSTR converts an array into a hexadecimal string and fills into a
  * given buffer. The buffer size is given as an extra argument.
  */
-#define BYTES2HEXSTR(array, str, len) ({                        \
-    static_assert(IS_CHAR_ARRAY(array), "`array` must be a char array"); \
+#define BYTES2HEXSTR(array, str, len) ({                         \
+    static_assert(IS_CHAR_ARRAY(array) || IS_UINT8_ARRAY(array), \
+                  "`array` must be a char or uint8_t array");    \
     __bytes2hexstr((array), sizeof(array), str, len);})
 
 /*
