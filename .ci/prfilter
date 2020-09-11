@@ -44,8 +44,6 @@ THE_BIG_LIST_OF_NAUGHTY_FILES = list(map(pathlib.Path, [
     'Examples/python-simple/run-tests.sh',
     'LibOS/shim/test/native',
     'Pal/src/host/Linux-SGX/debugger/gdb',
-    'Scripts/list-all-graphene.sh',
-    'Scripts/memusg',
     '.ci/run-pylint',
     '.ci/run-shellcheck',
 ]))

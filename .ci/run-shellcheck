@@ -16,7 +16,5 @@ shellcheck "$@" \
     Scripts/clean-check-test-copy \
     Scripts/download \
     Scripts/gitignore-test \
-    Scripts/list-all-graphene.sh \
-    Scripts/memusg \
     .ci/run-pylint \
     .ci/run-shellcheck
