@@ -25,7 +25,7 @@ do
     do
         rm -f OUTPUT
         echo "ab $OPTIONS -n $REQUESTS -c $CONCURRENCY $DOWNLOAD_HOST/$DOWNLOAD_FILE"
-        ab $OPTIONS -n $REQUESTS -c "$CONCURRENCY" $DOWNLOAD_HOST/$DOWNLOAD_FILE > OUTPUT || exit $?
+        ab $OPTIONS -n $REQUESTS -c "$CONCURRENCY" "$DOWNLOAD_HOST/$DOWNLOAD_FILE" > OUTPUT || exit $?
 
         sleep 5
 
