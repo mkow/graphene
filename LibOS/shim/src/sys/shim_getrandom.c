@@ -3,11 +3,14 @@
  *                    Michał Kowalczyk <mkow@invisiblethingslab.com>
  */
 
-#include <linux/random.h>
 #include <stdint.h>
 
 #include "shim_internal.h"
 #include "shim_table.h"
+
+#define GRND_NONBLOCK 0x0001
+#define GRND_RANDOM   0x0002
+#define GRND_INSECURE 0x0004
 
 long shim_do_getrandom(char* buf, size_t count, unsigned int flags) {
     if (flags & ~(GRND_NONBLOCK | GRND_RANDOM | GRND_INSECURE))
