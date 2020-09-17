@@ -3,7 +3,8 @@
  *                    Michał Kowalczyk <mkow@invisiblethingslab.com>
  */
 
-#include <sys/random.h>
+#include <linux/random.h>
+#include <stdint.h>
 
 #include "shim_internal.h"
 #include "shim_table.h"
