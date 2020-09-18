@@ -325,10 +325,6 @@ void parse_syscall_after(int sysno, const char* name, int nr, ...);
         ret = -ENOSYS;                                                             \
     END_SHIM(name)
 
-/* Some SHIM internal errno */
-#define ENOTLINK     143 /* the path is not a link */
-#define ESKIPPED     144 /* skip looking up current path */
-
 #define PAL_CB(member) (pal_control.member)
 
 extern bool lock_enabled;
