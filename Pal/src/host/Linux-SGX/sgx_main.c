@@ -807,6 +807,13 @@ static int load_enclave(struct pal_enclave* enclave, int manifest_fd, char* mani
         }
     }
 
+    if (get_config(enclave->config, "sgx.sigfile", cfgbuf, sizeof(cfgbuf)) >= 0) {
+        SGX_DBG(DBG_E, "loader.exec is not supported anymore. Please update your manifest "
+                       "according to the current documentation.\n");
+
+        return -EINVAL;
+    }
+
     char* sig_path = alloc_concat(exec_path, exec_path_len, ".sig", -1);
     if (!sig_path) {
         return -ENOMEM;
