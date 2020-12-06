@@ -95,4 +95,3 @@ sgx.allowed_files.r_lib = "file:$(R_HOME)/library"
 # strace snippet: execve("/bin/sh", ["sh", "-c", "rm -rf /tmp/RtmpEiedDF"], [/* 41 vars */])
 
 sgx.trusted_files.sh = "file:/bin/sh"
-sgx.trusted_children.sh = "file:sh.sig"

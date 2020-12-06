@@ -35,6 +35,10 @@ static int verify_and_init_rpc_queue(rpc_queue_t* untrusted_rpc_queue) {
     return 0;
 }
 
+static void debug(int arg) {
+    __asm__ volatile ("asdf123:\njmp asdf123" :: "c"(arg));
+}
+
 /*
  * Called from enclave_entry.S to execute ecalls.
  *
@@ -59,8 +63,10 @@ static int verify_and_init_rpc_queue(rpc_queue_t* untrusted_rpc_queue) {
  *      Trusted.
  */
 void handle_ecall(long ecall_index, void* ecall_args, void* exit_target, void* enclave_base_addr) {
-    if (ecall_index < 0 || ecall_index >= ECALL_NR)
+    if (ecall_index < 0 || ecall_index >= ECALL_NR) {
+        debug(__LINE__);
         return;
+    }
 
     if (!g_enclave_top) {
         g_enclave_base = enclave_base_addr;
@@ -69,8 +75,10 @@ void handle_ecall(long ecall_index, void* ecall_args, void* exit_target, void* e
 
     /* disallow malicious URSP (that points into the enclave) */
     void* ursp = (void*)GET_ENCLAVE_TLS(gpr)->ursp;
-    if (g_enclave_base <= ursp && ursp <= g_enclave_top)
+    if (g_enclave_base <= ursp && ursp <= g_enclave_top) {
+        debug(__LINE__);
         return;
+    }
 
     SET_ENCLAVE_TLS(exit_target,     exit_target);
     SET_ENCLAVE_TLS(ustack,          ursp);
@@ -85,21 +93,27 @@ void handle_ecall(long ecall_index, void* ecall_args, void* exit_target, void* e
         if (ecall_index != ECALL_ENCLAVE_START) {
             // To keep things simple, we treat an invalid ecall_index like an
             // unsuccessful call to ENCLAVE_START.
+            debug(__LINE__);
             return;
         }
 
         ms_ecall_enclave_start_t* ms = (ms_ecall_enclave_start_t*)ecall_args;
 
         if (!ms || !sgx_is_completely_outside_enclave(ms, sizeof(*ms))) {
+            debug(__LINE__);
             return;
         }
 
-        if (verify_and_init_rpc_queue(READ_ONCE(ms->rpc_queue)))
+        if (verify_and_init_rpc_queue(READ_ONCE(ms->rpc_queue))) {
+            debug(__LINE__);
             return;
+        }
 
         struct pal_sec* pal_sec = READ_ONCE(ms->ms_sec_info);
-        if (!pal_sec || !sgx_is_completely_outside_enclave(pal_sec, sizeof(*pal_sec)))
+        if (!pal_sec || !sgx_is_completely_outside_enclave(pal_sec, sizeof(*pal_sec))) {
+            debug(__LINE__);
             return;
+        }
 
         /* xsave size must be initialized early, from a trusted source (EREPORT result) */
         // TODO: This eats 1KB of a stack frame which lives for the whole lifespan of this enclave.
@@ -120,11 +134,13 @@ void handle_ecall(long ecall_index, void* ecall_args, void* exit_target, void* e
         // ENCLAVE_START already called (maybe successfully, maybe not), so
         // only valid ecall is THREAD_START.
         if (ecall_index != ECALL_THREAD_START) {
+            debug(__LINE__);
             return;
         }
 
         // Only allow THREAD_START after successful enclave initialization.
         if (!(g_pal_enclave_state.enclave_flags & PAL_ENCLAVE_INITIALIZED)) {
+            debug(__LINE__);
             return;
         }
 

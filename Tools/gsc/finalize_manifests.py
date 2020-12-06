@@ -95,12 +95,7 @@ def main(args=None):
                         'env_path': env_path
                         })
 
-    trusted_signatures = []
-
-    # To deal with multi-process applications, we allow multiple manifest files to be specified.
-    # User must specify manifest files in the order of parent to child. Here we reverse the list
-    # of manifests to include the signature files of children in the parent. The actual signatures
-    # are generated during 'gsc sign-image' command in a second step.
+    # TODO: finalize just a single manifest
     for manifest in reversed(args.manifests):
         print(f'{manifest}:')
 
@@ -116,15 +111,13 @@ def main(args=None):
         os.symlink(get_binary_path(executable), executable)
 
         with open(manifest, 'w') as manifest_file:
-            manifest_file.write('\n'.join((rendered_manifest,
-                                trusted_files,
-                                '\n'.join(trusted_signatures),
-                                '\n')))
+            manifest_file.write('\n'.join((
+                rendered_manifest,
+                trusted_files,
+                '\n')
+            ))
 
         print(f'\tWrote {manifest}.')
-
-        trusted_signatures.append(f'sgx.trusted_children.child{len(trusted_signatures)}'
-                                  f' = "file:{executable}.sig"')
 
         with open('signing_order.txt', 'a+') as sig_order:
             print(executable, file=sig_order)

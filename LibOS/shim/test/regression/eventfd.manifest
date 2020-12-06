@@ -1,7 +1,9 @@
 loader.preload = "file:../../src/libsysdb.so"
+loader.entrypoint = "file:eventfd"
+loader.argv0_override = "eventfd"
+
 loader.env.LD_LIBRARY_PATH = "/lib"
 loader.debug_type = "none"
-loader.argv0_override = "eventfd"
 
 sys.insecure__allow_eventfd = 1
 
@@ -14,5 +16,6 @@ sgx.trusted_files.libc = "file:../../../../Runtime/libc.so.6"
 sgx.trusted_files.libdl = "file:../../../../Runtime/libdl.so.2"
 sgx.trusted_files.libm = "file:../../../../Runtime/libm.so.6"
 sgx.trusted_files.libpthread = "file:../../../../Runtime/libpthread.so.0"
+sgx.trusted_files.eventfd = "file:eventfd"
 
 sgx.static_address = 1

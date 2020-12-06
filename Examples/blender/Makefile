@@ -60,8 +60,7 @@ $(BLENDER_DIR)/blender.manifest.sgx: $(BLENDER_DIR)/blender $(BLENDER_DIR)/blend
 		-output $@ \
 		-libpal $(GRAPHENE_DIR)/Runtime/libpal-Linux-SGX.so \
 		-key $(SGX_SIGNER_KEY) \
-		-manifest $(BLENDER_DIR)/blender.manifest \
-		-exec $<
+		-manifest $(BLENDER_DIR)/blender.manifest
 
 $(BLENDER_DIR)/blender.token: $(BLENDER_DIR)/blender.manifest.sgx
 	$(GRAPHENE_DIR)/Pal/src/host/Linux-SGX/signer/pal-sgx-get-token \

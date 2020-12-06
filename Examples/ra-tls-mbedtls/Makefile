@@ -134,8 +134,7 @@ server.manifest.sgx: server.manifest server libra_tls_attest.so mbedtls/CMakeLis
 	$(GRAPHENEDIR)/Pal/src/host/Linux-SGX/signer/pal-sgx-sign \
 		-libpal $(GRAPHENEDIR)/Runtime/libpal-Linux-SGX.so \
 		-key $(GRAPHENEKEY) \
-		-manifest $< -output $@ \
-		-exec server
+		-manifest $< -output $@
 
 server.sig: server.manifest.sgx
 
@@ -186,8 +185,7 @@ client_dcap.manifest.sgx: client_dcap.manifest mbedtls/CMakeLists.txt
 	$(GRAPHENEDIR)/Pal/src/host/Linux-SGX/signer/pal-sgx-sign \
 		-libpal $(GRAPHENEDIR)/Runtime/libpal-Linux-SGX.so \
 		-key $(GRAPHENEKEY) \
-		-manifest $< -output $@ \
-		-exec client
+		-manifest $< -output $@
 
 client_dcap.sig: client_dcap.manifest.sgx
 
@@ -228,8 +226,7 @@ client_epid.manifest.sgx: client_epid.manifest
 	$(GRAPHENEDIR)/Pal/src/host/Linux-SGX/signer/pal-sgx-sign \
 		-libpal $(GRAPHENEDIR)/Runtime/libpal-Linux-SGX.so \
 		-key $(GRAPHENEKEY) \
-		-manifest $< -output $@ \
-		-exec client
+		-manifest $< -output $@
 
 client_epid.sig: client_epid.manifest.sgx
 

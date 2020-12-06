@@ -87,8 +87,7 @@ addressbook.manifest.sgx: addressbook.manifest addressbook
 	$(GRAPHENEDIR)/Pal/src/host/Linux-SGX/signer/pal-sgx-sign \
 		-libpal $(GRAPHENEDIR)/Runtime/libpal-Linux-SGX.so \
 		-key $(SGX_SIGNER_KEY) \
-		-manifest $< -output $@ \
-		-exec $(SRCDIR)/addressbook
+		-manifest $< -output $@
 
 addressbook.sig: addressbook.manifest.sgx
 

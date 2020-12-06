@@ -93,7 +93,6 @@ python.manifest: python.manifest.template python-trusted-libs
 
 python.manifest.sgx: python.manifest | python
 	$(GRAPHENEDIR)/Pal/src/host/Linux-SGX/signer/pal-sgx-sign \
-		-exec python \
 		-libpal $(GRAPHENEDIR)/Runtime/libpal-Linux-SGX.so \
 		-key $(SGX_SIGNER_KEY) \
 		-manifest python.manifest -output $@

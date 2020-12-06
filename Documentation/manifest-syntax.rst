@@ -400,19 +400,6 @@ trusted and allowed are allowed for access, and Graphene-SGX emits a warning
 message for every such file. This is a convenient way to determine the set of
 files that the ported application uses.
 
-Trusted child processes
-^^^^^^^^^^^^^^^^^^^^^^^
-
-::
-
-    sgx.trusted_children.[identifier] = "[URI of signature file (.sig)]"
-
-This syntax specifies the signatures of allowed child processes of the current
-application. Upon process creation, the enclave in the current (parent) process
-will attest the enclave in the child process, by comparing to the signatures of
-the trusted children. If the child process is not trusted, the enclave will
-refuse to communicate with it.
-
 Attestation and quotes
 ^^^^^^^^^^^^^^^^^^^^^^
 

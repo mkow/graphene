@@ -254,8 +254,7 @@ out_fail:
  * configuration for early initialization.
  */
 noreturn void pal_main(PAL_NUM instance_id,        /* current instance id */
-                       PAL_HANDLE exec_handle,     /* executable handle if opened */
-                       PAL_PTR exec_loaded_addr,   /* executable addr if loaded */
+                       const char* exec_uri, // TODO: remove
                        PAL_HANDLE parent_process,  /* parent process if it's a child */
                        PAL_HANDLE first_thread,    /* first thread handle */
                        PAL_STR* arguments,         /* application arguments */
@@ -263,19 +262,20 @@ noreturn void pal_main(PAL_NUM instance_id,        /* current instance id */
     g_pal_state.instance_id = instance_id;
     g_pal_state.parent_process = parent_process;
 
-    char uri_buf[URI_MAX];
-    char* exec_uri = NULL;
     ssize_t ret;
 
     assert(g_pal_state.manifest_root);
     assert(g_pal_state.alloc_align && IS_POWER_OF_2(g_pal_state.alloc_align));
-    assert(exec_handle);
 
-    ret = _DkStreamGetName(exec_handle, uri_buf, URI_MAX);
-    if (ret < 0)
-        INIT_FAIL(-ret, "Cannot get executable name");
+    // char* entrypoint = NULL;
+    // ret = toml_string_in(g_pal_state.manifest_root, "loader.entrypoint", &entrypoint);
+    // if (ret < 0) {
+    //     INIT_FAIL(PAL_ERROR_INVAL, "Cannot read or parse 'loader.entrypoint'");
+    // }
 
-    exec_uri = malloc_copy(uri_buf, ret + 1);
+    exec_uri = strdup(exec_uri);// temporary hack, just to be safe
+    // exec_uri = entrypoint;
+    // entrypoint = NULL;
 
     char* dummy_exec_str = NULL;
     ret = toml_string_in(g_pal_state.manifest_root, "loader.exec", &dummy_exec_str);
@@ -284,23 +284,12 @@ noreturn void pal_main(PAL_NUM instance_id,        /* current instance id */
                                    "manifest according to the current documentation.");
     free(dummy_exec_str);
 
-    /* must be an ELF */
-    if (exec_loaded_addr) {
-        if (!has_elf_magic(exec_loaded_addr, sizeof(ElfW(Ehdr))))
-            INIT_FAIL(PAL_ERROR_INVAL, "Executable is not an ELF binary");
-    } else {
-        if (!is_elf_object(exec_handle))
-            INIT_FAIL(PAL_ERROR_INVAL, "Executable is not an ELF binary");
-    }
-
-    g_pal_state.exec_handle = exec_handle;
-
     bool disable_aslr = false;
     int64_t disable_aslr_int64;
     ret = toml_int_in(g_pal_state.manifest_root, "loader.insecure__disable_aslr",
                       /*defaultval=*/0, &disable_aslr_int64);
     if (ret < 0 || (disable_aslr_int64 != 0 && disable_aslr_int64 != 1)) {
-        INIT_FAIL_MANIFEST(PAL_ERROR_DENIED, "Cannot parse \'loader.insecure__disable_aslr\' "
+        INIT_FAIL_MANIFEST(PAL_ERROR_DENIED, "Cannot parse 'loader.insecure__disable_aslr' "
                                              "(the value must be 0 or 1)");
     }
     disable_aslr = !!disable_aslr_int64;
@@ -414,14 +403,6 @@ noreturn void pal_main(PAL_NUM instance_id,        /* current instance id */
         INIT_FAIL(-ret, "Inserting environment variables from the manifest failed");
 
     load_libraries();
-
-    if (exec_loaded_addr) {
-        ret = add_elf_object(exec_loaded_addr, exec_handle, OBJECT_EXEC);
-    } else {
-        ret = load_elf_object_by_handle(exec_handle, OBJECT_EXEC);
-    }
-    if (ret < 0)
-        INIT_FAIL(-ret, pal_strerror(-ret));
 
     set_debug_type();
 

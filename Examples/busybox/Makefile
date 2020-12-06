@@ -88,8 +88,7 @@ busybox.manifest.sgx: busybox.manifest busybox
 	$(GRAPHENEDIR)/Pal/src/host/Linux-SGX/signer/pal-sgx-sign \
 		-libpal $(GRAPHENEDIR)/Runtime/libpal-Linux-SGX.so \
 		-key $(SGX_SIGNER_KEY) \
-		-manifest $< -output $@ \
-		-exec busybox
+		-manifest $< -output $@
 	$(GRAPHENEDIR)/Pal/src/host/Linux-SGX/signer/pal-sgx-get-token \
 		-output busybox.token -sig busybox.sig
 

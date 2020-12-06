@@ -108,7 +108,6 @@ lighttpd.manifest: lighttpd.manifest.template lighttpd-trusted-libs lighttpd-tru
 # for enclave initialization.
 lighttpd.manifest.sgx: lighttpd.manifest $(INSTALL_DIR)/sbin/lighttpd | lighttpd
 	$(GRAPHENEDIR)/Pal/src/host/Linux-SGX/signer/pal-sgx-sign \
-		-exec lighttpd \
 		-libpal $(GRAPHENEDIR)/Runtime/libpal-Linux-SGX.so \
 		-key $(SGX_SIGNER_KEY) \
 		-manifest lighttpd.manifest -output $@

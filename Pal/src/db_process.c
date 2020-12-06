@@ -19,6 +19,13 @@
 PAL_HANDLE DkProcessCreate(PAL_STR uri, PAL_STR* args) {
     ENTER_PAL_CALL(DkProcessCreate);
 
+    printf("creating process: %s\n", uri);
+    if (args) {
+        for (int i=0; args[i]; i++)
+            printf("args[%d]: %s\n", i, args[i]);
+    } else {
+        printf("args == NULL\n");
+    }
     assert(uri);
 
     PAL_HANDLE handle = NULL;

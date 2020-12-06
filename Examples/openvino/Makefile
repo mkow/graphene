@@ -79,7 +79,6 @@ object_detection_sample_ssd.manifest.sgx: object_detection_sample_ssd.manifest \
 		$(OPENVINO_DIR)/inference-engine/bin/intel64/$(OPENVINO_BUILD)/object_detection_sample_ssd \
 		| object_detection_sample_ssd
 	$(GRAPHENE_DIR)/Pal/src/host/Linux-SGX/signer/pal-sgx-sign \
-		-exec object_detection_sample_ssd \
 		-libpal $(GRAPHENE_DIR)/Runtime/libpal-Linux-SGX.so \
 		-key $(SGX_SIGNER_KEY) \
 		-manifest $< -output $@

@@ -102,8 +102,8 @@ struct proc_args {
     unsigned long   memory_quota;
 
     size_t parent_data_size;
-    size_t exec_data_size;
     size_t manifest_data_size;
+    size_t exec_uri_size;
 };
 
 /*
@@ -186,23 +186,17 @@ int _DkProcessCreate(PAL_HANDLE* handle, const char* uri, const char** args) {
     /* step 3: compose process parameters */
 
     size_t parent_data_size = 0;
-    size_t exec_data_size = 0;
     size_t manifest_data_size = 0;
+    size_t exec_uri_size = strlen(uri);
 
     ret = handle_serialize(parent_handle, &parent_data);
     if (ret < 0)
         goto out;
     parent_data_size = (size_t)ret;
 
-    ret = handle_serialize(exec, &exec_data);
-    if (ret < 0) {
-        goto out;
-    }
-    exec_data_size = (size_t)ret;
-
     manifest_data_size = strlen(g_pal_state.raw_manifest_data);
 
-    size_t data_size = parent_data_size + exec_data_size + manifest_data_size;
+    size_t data_size = parent_data_size + manifest_data_size + exec_uri_size;
     proc_args = malloc(sizeof(struct proc_args) + data_size);
     if (!proc_args) {
         ret = -ENOMEM;
@@ -221,13 +215,13 @@ int _DkProcessCreate(PAL_HANDLE* handle, const char* uri, const char** args) {
     proc_args->parent_data_size = parent_data_size;
     data += parent_data_size;
 
-    memcpy(data, exec_data, exec_data_size);
-    proc_args->exec_data_size = exec_data_size;
-    data += exec_data_size;
-
     memcpy(data, g_pal_state.raw_manifest_data, manifest_data_size);
     proc_args->manifest_data_size = manifest_data_size;
     data += manifest_data_size;
+
+    memcpy(data, uri, exec_uri_size);
+    proc_args->exec_uri_size = exec_uri_size;
+    data += exec_uri_size;
 
     /* step 4: create a child thread which will execve in the future */
 
@@ -295,7 +289,7 @@ out:
     return ret;
 }
 
-void init_child_process(int parent_pipe_fd, PAL_HANDLE* parent_handle, PAL_HANDLE* exec_handle,
+void init_child_process(int parent_pipe_fd, PAL_HANDLE* parent_handle, char** exec_uri_out,
                         char** manifest_out) {
     int ret = 0;
 
@@ -311,8 +305,8 @@ void init_child_process(int parent_pipe_fd, PAL_HANDLE* parent_handle, PAL_HANDL
     if (!proc_args.parent_data_size)
         INIT_FAIL(PAL_ERROR_INVAL, "invalid process created");
 
-    size_t data_size = proc_args.parent_data_size + proc_args.exec_data_size
-                       + proc_args.manifest_data_size;
+    size_t data_size = proc_args.parent_data_size
+                       + proc_args.manifest_data_size + proc_args.exec_uri_size;
     char* data = malloc(data_size);
     if (!data)
         INIT_FAIL(PAL_ERROR_NOMEM, "Out of memory");
@@ -330,18 +324,6 @@ void init_child_process(int parent_pipe_fd, PAL_HANDLE* parent_handle, PAL_HANDL
     data_iter += proc_args.parent_data_size;
     *parent_handle = parent;
 
-    /* deserialize the executable handle */
-    if (proc_args.exec_data_size) {
-        PAL_HANDLE exec = NULL;
-
-        ret = handle_deserialize(&exec, data_iter, proc_args.exec_data_size);
-        if (ret < 0)
-            INIT_FAIL(-ret, "cannot deserialize executable handle");
-
-        data_iter += proc_args.exec_data_size;
-        *exec_handle = exec;
-    }
-
     char* manifest = malloc(proc_args.manifest_data_size + 1);
     if (!manifest)
         INIT_FAIL(PAL_ERROR_NOMEM, "Out of memory");
@@ -349,10 +331,18 @@ void init_child_process(int parent_pipe_fd, PAL_HANDLE* parent_handle, PAL_HANDL
     manifest[proc_args.manifest_data_size] = '\0';
     data_iter += proc_args.manifest_data_size;
 
+    char* exec_uri = malloc(proc_args.exec_uri_size + 1);
+    if (!exec_uri)
+        INIT_FAIL(PAL_ERROR_NOMEM, "Out of memory");
+    memcpy(exec_uri, data_iter, proc_args.exec_uri_size);
+    exec_uri[proc_args.exec_uri_size] = '\0';
+    data_iter += proc_args.exec_uri_size;
+
     g_linux_state.parent_process_id = proc_args.parent_process_id;
     g_linux_state.memory_quota = proc_args.memory_quota;
     memcpy(&g_pal_sec, &proc_args.pal_sec, sizeof(struct pal_sec));
 
+    *exec_uri_out = exec_uri;
     *manifest_out = manifest;
     free(data);
 }

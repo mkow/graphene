@@ -88,8 +88,7 @@ redis-server.manifest.sgx: redis-server.manifest $(SRCDIR)/src/redis-server
 	$(GRAPHENEDIR)/Pal/src/host/Linux-SGX/signer/pal-sgx-sign \
 		-libpal $(GRAPHENEDIR)/Runtime/libpal-Linux-SGX.so \
 		-key $(SGX_SIGNER_KEY) \
-		-manifest $< -output $@ \
-		-exec $(SRCDIR)/src/redis-server
+		-manifest $< -output $@
 	$(GRAPHENEDIR)/Pal/src/host/Linux-SGX/signer/pal-sgx-get-token \
 		-output redis-server.token -sig redis-server.sig
 

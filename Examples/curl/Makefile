@@ -63,7 +63,6 @@ curl.manifest: curl.manifest.template curl-trusted-libs
 # Generate SGX-specific manifest, enclave signature, and token for enclave initialization
 curl.manifest.sgx: curl curl.manifest
 	$(GRAPHENEDIR)/Pal/src/host/Linux-SGX/signer/pal-sgx-sign \
-		-exec curl \
 		-libpal $(GRAPHENEDIR)/Runtime/libpal-Linux-SGX.so \
 		-key $(SGX_SIGNER_KEY) \
 		-manifest curl.manifest -output $@

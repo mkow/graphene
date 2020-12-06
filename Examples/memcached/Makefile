@@ -90,7 +90,6 @@ memcached.manifest.sgx: memcached.manifest memcached
 		-libpal $(GRAPHENEDIR)/Runtime/libpal-Linux-SGX.so \
 		-key $(SGX_SIGNER_KEY) \
 		-manifest $< -output $@ \
-		-exec $(SRCDIR)/memcached
 
 memcached.sig: memcached.manifest.sgx
 

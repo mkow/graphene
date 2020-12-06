@@ -11,7 +11,6 @@ import argparse
 def generate_signature(exec_):
     sign_process = subprocess.Popen([
         '/graphene/python/graphene-sgx-sign',
-        '-exec', exec_,
         '-libpal', '/graphene/Runtime/libpal-Linux-SGX.so',
         '-key', '/gsc-signer-key.pem',
         '-output', f'{exec_}.manifest.sgx',

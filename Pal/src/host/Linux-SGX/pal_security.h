@@ -24,9 +24,7 @@ struct pal_sec {
     PAL_PTR heap_min, heap_max;
 
     /* executable name, addr and size */
-    PAL_SEC_STR exec_name;
-    PAL_PTR     exec_addr;
-    PAL_NUM     exec_size;
+    PAL_SEC_STR exec_name; // it's actually URI, not name. TODO: rename
 
     /* child's stream FD created and sent over by parent */
     PAL_IDX stream_fd;

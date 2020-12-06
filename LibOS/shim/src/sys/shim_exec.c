@@ -109,7 +109,7 @@ noreturn static void __shim_do_execve_rtld(struct execve_rtld_arg* __arg) {
     get_handle(exec);
     unlock(&g_process.fs_lock);
 
-    if ((ret = load_elf_object(exec, NULL, 0)) < 0)
+    if ((ret = load_elf_object(exec)) < 0)
         goto error;
 
     if ((ret = init_brk_from_executable(exec)) < 0)

@@ -2,6 +2,7 @@ loader.preload = "file:$(GRAPHENEDIR)/Runtime/libsysdb.so"
 loader.env.LD_LIBRARY_PATH = "/lib:."
 loader.env.PATH = "/bin:/usr/bin"
 loader.debug_type = "none"
+loader.entrypoint = "file:label_image"
 
 # Read application arguments directly from the command line. Don't use this on production!
 loader.insecure__use_cmdline_argv = 1
@@ -25,6 +26,7 @@ sgx.trusted_files.libgcc = "file:$(GRAPHENEDIR)/Runtime/libgcc_s.so.1"
 sgx.trusted_files.libpthread = "file:$(GRAPHENEDIR)/Runtime/libpthread.so.0"
 sgx.trusted_files.librt = "file:$(GRAPHENEDIR)/Runtime/librt.so.1"
 sgx.trusted_files.libtensorflowframework = "file:libtensorflow_framework.so"
+sgx.trusted_files.label_image = "file:label_image"
 
 sgx.trusted_files.model = "file:inception_v3.tflite"
 sgx.allowed_files.image = "file:image.bmp"

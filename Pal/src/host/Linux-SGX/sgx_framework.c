@@ -205,9 +205,20 @@ int create_enclave(sgx_arch_secs_t* secs, sgx_arch_token_t* token) {
     return 0;
 }
 
+static __attribute__((__unused__)) uint32_t _hash(uint8_t* data, size_t data_size) {
+    uint32_t res = 0;
+    for (size_t i = 0; i < data_size; i++) {
+        res *= 257;
+        res += data[i];
+        res %= 1000037;
+    }
+    return res;
+}
+
 int add_pages_to_enclave(sgx_arch_secs_t* secs, void* addr, void* user_addr, unsigned long size,
                          enum sgx_page_type type, int prot, bool skip_eextend,
                          const char* comment) {
+    __UNUSED(secs); /* Used only under DCAP ifdefs */
     sgx_arch_sec_info_t secinfo;
     int ret;
 
@@ -281,7 +292,7 @@ int add_pages_to_enclave(sgx_arch_secs_t* secs, void* addr, void* user_addr, uns
 
     /* newer DCAP driver (version 1.6+) allows adding a range of pages for performance, use it */
     struct sgx_enclave_add_pages param = {
-        .offset  = (uint64_t)addr,
+        .offset  = (uint64_t)addr - secs->base,
         .src     = (uint64_t)(user_addr ?: g_zero_pages),
         .length  = size,
         .secinfo = (uint64_t)&secinfo,
@@ -318,7 +329,7 @@ int add_pages_to_enclave(sgx_arch_secs_t* secs, void* addr, void* user_addr, uns
     }
 
     /* ask Intel SGX driver to actually mmap the added enclave pages */
-    uint64_t mapped = INLINE_SYSCALL(mmap, 6, secs->base + addr, size, prot, MAP_FIXED | MAP_SHARED,
+    uint64_t mapped = INLINE_SYSCALL(mmap, 6, addr, size, prot, MAP_FIXED | MAP_SHARED,
                                      g_isgx_device, 0);
     if (IS_ERR_P(mapped)) {
         SGX_DBG(DBG_I, "Cannot map enclave pages %ld\n", ERRNO_P(mapped));
@@ -327,7 +338,7 @@ int add_pages_to_enclave(sgx_arch_secs_t* secs, void* addr, void* user_addr, uns
 #else
     /* older drivers (DCAP v1.5- and old out-of-tree) only supports adding one page at a time */
     struct sgx_enclave_add_page param = {
-        .addr    = secs->base + (uint64_t)addr,
+        .addr    = (uint64_t)addr,
         .src     = (uint64_t)(user_addr ?: g_zero_pages),
         .secinfo = (uint64_t)&secinfo,
         .mrmask  = skip_eextend ? 0 : (uint16_t)-1,
@@ -335,6 +346,8 @@ int add_pages_to_enclave(sgx_arch_secs_t* secs, void* addr, void* user_addr, uns
 
     uint64_t added_size = 0;
     while (added_size < size) {
+        // if (g_pal_enclave.is_first_process == false)
+        // SGX_DBG(DBG_I, "XYZ adding page 0x%08llx (0x%04x, %02x %02x %02x %02x)\n", param.addr - secs->base, _hash((void*)param.src, g_page_size), ((uint8_t*)param.src)[256+3], ((uint8_t*)param.src)[256+7], ((uint8_t*)param.src)[256+11], ((uint8_t*)param.src)[256+15]);
         ret = INLINE_SYSCALL(ioctl, 3, g_isgx_device, SGX_IOC_ENCLAVE_ADD_PAGE, &param);
         if (IS_ERR(ret)) {
             if (ret == -EINTR)
@@ -350,7 +363,7 @@ int add_pages_to_enclave(sgx_arch_secs_t* secs, void* addr, void* user_addr, uns
     }
 
     /* need to change permissions for EADDed pages since the initial mmap was with PROT_NONE */
-    ret = mprotect(secs->base + addr, size, prot);
+    ret = mprotect(addr, size, prot);
     if (IS_ERR(ret)) {
         SGX_DBG(DBG_I, "Changing protections of EADDed pages returned %d\n", ret);
         return -ERRNO(ret);
