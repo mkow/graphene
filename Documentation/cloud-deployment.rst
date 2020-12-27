@@ -54,7 +54,7 @@ Building
 
        cd LibOS/shim/test/native
        make SGX=1 sgx-tokens
-       SGX=1 ../../../../Runtime/pal_loader helloworld
+       SGX=1 ../../../../Runtime/pal_loader helloworld.manifest.sgx
 
 Azure Kubernetes Services (AKS)
 -------------------------------

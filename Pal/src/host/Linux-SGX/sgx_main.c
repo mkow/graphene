@@ -992,7 +992,8 @@ static int load_enclave(struct pal_enclave* enclave, const char* exec_path, char
         return -EINVAL;
     }
 
-    char* sig_path = alloc_concat(g_pal_enclave.project_path, -1, ".sig", -1);
+    size_t project_path_size = strlen(g_pal_enclave.manifest_path) - strlen(".manifest.sgx");
+    char* sig_path = alloc_concat(g_pal_enclave.manifest_path, project_path_size, ".sig", -1);
     if (!sig_path) {
         return -ENOMEM;
     }
@@ -1004,7 +1005,7 @@ static int load_enclave(struct pal_enclave* enclave, const char* exec_path, char
     }
     free(sig_path);
 
-    char* token_path = alloc_concat(g_pal_enclave.project_path, -1, ".token", -1);
+    char* token_path = alloc_concat(g_pal_enclave.manifest_path, project_path_size, ".token", -1);
     if (!token_path) {
         return -ENOMEM;
     }
@@ -1090,7 +1091,7 @@ static void force_linux_to_grow_stack(void) {
 noreturn static void print_usage_and_exit(const char* argv_0) {
     const char* self = argv_0 ?: "<this program>";
     printf("USAGE:\n"
-           "\tFirst process: %s <path to libpal.so> init <project_path> args...\n"
+           "\tFirst process: %s <path to libpal.so> init <manifest_path> args...\n"
            "\tChildren:      %s <path to libpal.so> child <parent_pipe_fd> args...\n",
            self, self);
     printf("This is an internal interface. Use pal_loader to launch applications in Graphene.\n");
@@ -1099,7 +1100,6 @@ noreturn static void print_usage_and_exit(const char* argv_0) {
 }
 
 int main(int argc, char* argv[], char* envp[]) {
-    char* manifest_path = NULL;
     char* exec_path = NULL; // TODO: The logic of passing exec_path here is a messy leftover from
                             // the old design. It should be removed from here and handled by LibOS.
     int ret = 0;
@@ -1135,27 +1135,21 @@ int main(int argc, char* argv[], char* envp[]) {
     if (first_process) {
         g_pal_enclave.is_first_process = true;
 
-        g_pal_enclave.project_path = strdup(argv[3]); // strdup just to be safe, TODO: remove
-        manifest_path = alloc_concat(g_pal_enclave.project_path, -1, ".manifest.sgx", -1);
-        if (!manifest_path) {
-            return -ENOMEM;
-        }
-
-        SGX_DBG(DBG_I, "Manifest file: %s\n", manifest_path);
-        ret = read_text_file_to_cstr(manifest_path, &manifest);
+        g_pal_enclave.manifest_path = strdup(argv[3]); // strdup just to be safe, TODO: remove
+        SGX_DBG(DBG_I, "Manifest file: %s\n", g_pal_enclave.manifest_path);
+        ret = read_text_file_to_cstr(g_pal_enclave.manifest_path, &manifest);
         if (ret < 0) {
             SGX_DBG(DBG_E, "Reading manifest failed\n");
             return ret;
         }
-        free(manifest_path);
-        manifest_path = NULL;
     } else {
         /* We're one of the children spawned to host new processes started inside Graphene. */
         g_pal_enclave.is_first_process = false;
 
         /* We'll receive our argv and config via IPC. */
         int parent_pipe_fd = atoi(argv[3]);
-        ret = sgx_init_child_process(parent_pipe_fd, &g_pal_enclave.pal_sec, &g_pal_enclave.project_path, &manifest);
+        ret = sgx_init_child_process(parent_pipe_fd, &g_pal_enclave.pal_sec,
+                                     &g_pal_enclave.manifest_path, &manifest);
         if (ret < 0)
             return ret;
         exec_path = strdup(g_pal_enclave.pal_sec.exec_name + URI_PREFIX_FILE_LEN);
