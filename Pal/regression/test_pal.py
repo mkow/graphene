@@ -9,6 +9,7 @@ import shutil
 import string
 import subprocess
 import unittest
+from os import path
 
 from regression import (
     HAS_SGX,

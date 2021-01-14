@@ -69,5 +69,11 @@ CFLAGS += -Werror
 CXXFLAGS += -Werror
 endif
 
+ifeq ($(UBSAN),1)
+CFLAGS += -fsanitize=undefined -fno-omit-frame-pointer -fno-sanitize-recover
+CXXFLAGS += -fsanitize=undefined -fno-omit-frame-pointer -fno-sanitize-recover
+UBSAN_LDFLAGS = -L/usr/lib/gcc/x86_64-linux-gnu/9/ -lubsan
+endif
+
 MAKEFILE_CONFIGS_INCLUDED = y
 include $(MAKEFILE_CONFIGS_DIR)/Makefile.Host

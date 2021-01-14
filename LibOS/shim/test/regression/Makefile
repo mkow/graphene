@@ -12,7 +12,6 @@ c_executables = \
 	abort_multithread \
 	bootstrap \
 	bootstrap_pie \
-	bootstrap_static \
 	debug \
 	dev \
 	device \
@@ -86,6 +85,11 @@ c_executables = \
 	unix \
 	vfork_and_exec \
 	$(c_executables-$(ARCH))
+
+ifneq ($(UBSAN),1)
+c_executables += \
+	bootstrap_static
+endif
 
 cxx_executables = bootstrap_cpp
 
