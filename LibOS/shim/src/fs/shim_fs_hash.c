@@ -10,9 +10,11 @@
 
 static HASHTYPE __hash(const char* p, size_t len) {
     HASHTYPE hash = 0;
+    HASHTYPE tmp = 0;
 
     for (; len >= sizeof(hash); p += sizeof(hash), len -= sizeof(hash)) {
-        hash += *((HASHTYPE*)p);
+        memcpy(&tmp, p, sizeof(tmp)); /* avoid pointer alignment issues */
+        hash += *((HASHTYPE*)&tmp);
         hash *= 9;
     }
 
