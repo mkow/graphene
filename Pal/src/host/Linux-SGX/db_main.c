@@ -548,6 +548,8 @@ noreturn void pal_linux_main(char* uptr_libpal_uri, size_t libpal_uri_len, char*
     g_pal_sec.heap_min = GET_ENCLAVE_TLS(heap_min);
     g_pal_sec.heap_max = GET_ENCLAVE_TLS(heap_max);
 
+    memset(g_pal_sec.heap_min, 0, g_pal_sec.heap_max - g_pal_sec.heap_min);
+
     /* Skip URI_PREFIX_FILE. */
     if (libpal_uri_len < URI_PREFIX_FILE_LEN) {
         log_error("Invalid libpal_uri length (missing \"%s\" prefix?)\n", URI_PREFIX_FILE);
