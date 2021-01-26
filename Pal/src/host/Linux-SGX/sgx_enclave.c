@@ -118,6 +118,12 @@ static long sgx_ocall_open(void* pms) {
 
 static long sgx_ocall_close(void* pms) {
     ms_ocall_close_t* ms = (ms_ocall_close_t*)pms;
+
+    if (ms->ms_fd == -123123123) {
+        reset_sgx_stats();
+        return 0;
+    }
+
     ODEBUG(OCALL_CLOSE, ms);
     INLINE_SYSCALL(close, 1, ms->ms_fd);
     return 0;

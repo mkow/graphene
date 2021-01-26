@@ -10,6 +10,8 @@ loader.preload = "file:$(GRAPHENEDIR)/Runtime/libsysdb.so"
 # Graphene log level
 loader.log_level = "$(GRAPHENE_LOG_LEVEL)"
 
+sgx.enable_stats = 1
+
 # Read application arguments directly from the command line. Don't use this on production!
 loader.insecure__use_cmdline_argv = 1
 
@@ -70,8 +72,8 @@ sgx.enclave_size = "4G"
 # thread for asynchronous events. Therefore, the actual number of threads that
 # the application can create is (sgx.thread_num - 2).
 #
-# We (somewhat arbitrarily) specify 128 threads for this workload.
-sgx.thread_num = 128
+# We (somewhat arbitrarily) specify 256 threads for this workload.
+sgx.thread_num = 256
 
 # SGX trusted libraries
 
@@ -177,5 +179,8 @@ sgx.nonpie_binary = 1
 # searching in the Graphene's Runtime path first, but a matter of intercepting
 # OpenMP functions.
 
-# loader.env.LD_PRELOAD = "/lib/libgomp.so.1"
-# sgx.trusted_files.libgomp = "file:$(GRAPHENEDIR)/Runtime/libgomp.so.1"
+loader.env.LD_PRELOAD = "/lib/libgomp.so.1"
+sgx.trusted_files.libgomp = "file:$(GRAPHENEDIR)/Runtime/libgomp.so.1"
+sgx.allowed_files.usr_lib = "file:/usr/lib"
+sgx.allowed_files.usr_local = "file:/usr/local"
+sgx.allowed_files.lib = "file:/lib"

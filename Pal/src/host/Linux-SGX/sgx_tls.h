@@ -116,6 +116,7 @@ static inline PAL_TCB_URTS* get_tcb_urts(void) {
 
 extern bool g_sgx_enable_stats;
 void update_and_print_stats(bool process_wide);
+void reset_sgx_stats(void);
 #endif /* IN_ENCLAVE */
 
 #endif /* __SGX_TLS_H__ */
