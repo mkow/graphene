@@ -385,7 +385,7 @@ static int initialize_enclave(struct pal_enclave* enclave, const char* manifest_
 
     if (last_populated_addr > enclave_heap_min) {
         areas[area_num] = (struct mem_area){.desc         = "free",
-                                            .skip_eextend = false,
+                                            .skip_eextend = true,
                                             .data_src     = ZERO,
                                             .addr         = enclave_heap_min,
                                             .size         = last_populated_addr - enclave_heap_min,
