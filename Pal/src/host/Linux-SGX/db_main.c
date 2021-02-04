@@ -548,7 +548,7 @@ noreturn void pal_linux_main(char* uptr_libpal_uri, size_t libpal_uri_len, char*
     g_pal_sec.heap_min = GET_ENCLAVE_TLS(heap_min);
     g_pal_sec.heap_max = GET_ENCLAVE_TLS(heap_max);
 
-    // memset(g_pal_sec.heap_min, 0, g_pal_sec.heap_max - g_pal_sec.heap_min);
+    memset(g_pal_sec.heap_min, 0, g_pal_sec.heap_max - g_pal_sec.heap_min);
     // for (uint8_t* i = g_pal_sec.heap_min; i < (uint8_t*)g_pal_sec.heap_max; i += g_page_size)
     //     READ_ONCE(*i);
     __asm__ volatile("":::"memory");
