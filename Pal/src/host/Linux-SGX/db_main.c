@@ -551,8 +551,8 @@ noreturn void pal_linux_main(char* uptr_libpal_uri, size_t libpal_uri_len, char*
     // memset(g_pal_sec.heap_min, 0, g_pal_sec.heap_max - g_pal_sec.heap_min);
     // for (uint8_t* i = g_pal_sec.heap_min; i < (uint8_t*)g_pal_sec.heap_max; i += g_page_size)
     //     READ_ONCE(*i);
-    __asm__ volatile("":::"memory");
-    ocall_close(-123123123);
+    // __asm__ volatile("":::"memory");
+    // ocall_close(-123123123);
 
     /* Skip URI_PREFIX_FILE. */
     if (libpal_uri_len < URI_PREFIX_FILE_LEN) {
