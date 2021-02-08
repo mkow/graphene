@@ -453,6 +453,7 @@ static int initialize_enclave(struct pal_enclave* enclave, const char* manifest_
             memcpy(data, areas[i].buf, areas[i].buf_size);
         } else {
             assert(areas[i].data_src == ZERO);
+            assert(areas[i].buf == NULL);
         }
 
         ret = add_pages_to_enclave(&enclave_secs, (void*)areas[i].addr, data, areas[i].size,
