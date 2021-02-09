@@ -385,7 +385,8 @@ static int initialize_enclave(struct pal_enclave* enclave, const char* manifest_
 
     if (last_populated_addr > enclave_heap_min) {
         areas[area_num] = (struct mem_area){.desc         = "free",
-                                            .skip_eextend = false,
+                                            // .skip_eextend = false,
+                                            .skip_eextend = true,
                                             .data_src     = ZERO,
                                             .addr         = enclave_heap_min,
                                             .size         = last_populated_addr - enclave_heap_min,
@@ -405,7 +406,7 @@ static int initialize_enclave(struct pal_enclave* enclave, const char* manifest_
         }
 
         void* data = NULL;
-        // if (areas[i].data_src != ZERO) {
+        if (areas[i].data_src != ZERO) {
             data = (void*)INLINE_SYSCALL(mmap, 6, NULL, areas[i].size, PROT_READ | PROT_WRITE,
                                          MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
             if (IS_ERR_P(data) || data == NULL) {
@@ -413,7 +414,7 @@ static int initialize_enclave(struct pal_enclave* enclave, const char* manifest_
                 urts_log_error("Allocating memory failed\n");
                 goto out;
             }
-        // }
+        }
 
         if (areas[i].data_src == TLS) {
             for (uint32_t t = 0; t < enclave->thread_num; t++) {
@@ -453,8 +454,7 @@ static int initialize_enclave(struct pal_enclave* enclave, const char* manifest_
             memcpy(data, areas[i].buf, areas[i].buf_size);
         } else {
             assert(areas[i].data_src == ZERO);
-            assert(areas[i].buf == NULL);
-            memset(data, 0xFF, areas[i].size);
+            // memset(data, 0xFF, areas[i].size);
         }
 
         ret = add_pages_to_enclave(&enclave_secs, (void*)areas[i].addr, data, areas[i].size,

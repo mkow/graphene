@@ -467,7 +467,8 @@ def populate_memory_areas(attr, areas, enclave_base, enclave_heap_min):
         free_areas.append(
             MemoryArea('free', addr=enclave_heap_min,
                        size=last_populated_addr - enclave_heap_min, flags=flags,
-                       measure=True, content=b'\xFF' * (last_populated_addr - enclave_heap_min)))
+                       measure=False))
+                       #measure=True, content=b'\xFF' * (last_populated_addr - enclave_heap_min)))
 
     gen_area_content(attr, areas, enclave_base, enclave_heap_min)
 
