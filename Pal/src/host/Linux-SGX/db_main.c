@@ -700,7 +700,7 @@ noreturn void pal_linux_main(char* uptr_libpal_uri, size_t libpal_uri_len, char*
     g_pal_state.raw_manifest_data = manifest_addr;
     g_pal_state.manifest_root = manifest_root;
 
-    int preheat_heap = 0;
+    int64_t preheat_heap = 0;
     ret = toml_int_in(g_pal_state.manifest_root, "sgx.preheat_heap", /*defaultval=*/0,
                       &preheat_heap);
     if (ret < 0) {
