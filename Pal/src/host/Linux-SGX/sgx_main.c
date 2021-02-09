@@ -454,7 +454,7 @@ static int initialize_enclave(struct pal_enclave* enclave, const char* manifest_
         } else {
             assert(areas[i].data_src == ZERO);
             assert(areas[i].buf == NULL);
-            memset(data, 0, areas[i].size);
+            memset(data, 0xFF, areas[i].size);
         }
 
         ret = add_pages_to_enclave(&enclave_secs, (void*)areas[i].addr, data, areas[i].size,
