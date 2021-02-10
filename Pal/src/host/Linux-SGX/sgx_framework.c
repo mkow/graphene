@@ -308,11 +308,16 @@ int add_pages_to_enclave(sgx_arch_secs_t* secs, void* addr, void* user_addr, uns
     }
 
     /* ask Intel SGX driver to actually mmap the added enclave pages */
-    uint64_t mapped = INLINE_SYSCALL(mmap, 6, addr, size, prot, MAP_FIXED | MAP_SHARED | MAP_POPULATE,
+    uint64_t mapped = INLINE_SYSCALL(mmap, 6, addr, size, prot, MAP_FIXED | MAP_SHARED,
                                      g_isgx_device, 0);
     if (IS_ERR_P(mapped)) {
         urts_log_error("Cannot map enclave pages %ld\n", ERRNO_P(mapped));
         return -EACCES;
+    }
+    ret = INLINE_SYSCALL(mprotect, 3, addr, size, prot);
+    if (ret < 0) {
+        urts_log_error("Cannot map enclave pages %ld\n", ret);
+        return ret;
     }
 #else
     /* older drivers (DCAP v1.5- and old out-of-tree) only supports adding one page at a time */
