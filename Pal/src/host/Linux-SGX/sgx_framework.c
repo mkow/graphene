@@ -316,7 +316,7 @@ int add_pages_to_enclave(sgx_arch_secs_t* secs, void* addr, void* user_addr, uns
     }
     ret = INLINE_SYSCALL(mprotect, 3, addr, size, prot);
     if (ret < 0) {
-        urts_log_error("Cannot map enclave pages %ld\n", ret);
+        urts_log_error("Cannot map enclave pages %d\n", ret);
         return ret;
     }
 #else
