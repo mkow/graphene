@@ -308,7 +308,7 @@ int add_pages_to_enclave(sgx_arch_secs_t* secs, void* addr, void* user_addr, uns
     }
 
     /* ask Intel SGX driver to actually mmap the added enclave pages */
-    uint64_t mapped = INLINE_SYSCALL(mmap, 6, addr, size, prot, MAP_FIXED | MAP_SHARED,
+    uint64_t mapped = INLINE_SYSCALL(mmap, 6, addr, size, prot, MAP_FIXED | MAP_SHARED | MAP_POPULATE,
                                      g_isgx_device, 0);
     if (IS_ERR_P(mapped)) {
         urts_log_error("Cannot map enclave pages %ld\n", ERRNO_P(mapped));
