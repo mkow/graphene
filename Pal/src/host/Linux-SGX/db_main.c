@@ -708,10 +708,9 @@ noreturn void pal_linux_main(char* uptr_libpal_uri, size_t libpal_uri_len, char*
         ocall_exit(1, true);
     }
     if (preheat_enclave == 1) {
-        for (long* i = g_pal_sec.heap_min; i < (long*)g_pal_sec.heap_max; i += g_page_size / sizeof(long)) {
-            WRITE_ONCE(*i, 0);
-            assert(IS_ALIGNED_PTR(i, 0x1000));
-        }
+        for (long* i = g_pal_sec.heap_min; i < (long*)g_pal_sec.heap_max; i += g_page_size / sizeof(long))
+            // WRITE_ONCE(*i, 0);
+            READ_ONCE(*i);
     }
 
     ret = toml_sizestring_in(g_pal_state.manifest_root, "loader.pal_internal_mem_size",
