@@ -717,9 +717,9 @@ noreturn void pal_linux_main(char* uptr_libpal_uri, size_t libpal_uri_len, char*
         //     READ_ONCE(*i);
             // WRITE_ONCE(*i, 0);
         for (uint8_t* i = g_pal_sec.heap_min; i < (uint8_t*)g_pal_sec.heap_max; i += g_page_size)
-            READ_ONCE(*(size_t*)i);
+            // READ_ONCE(*(size_t*)i);
             // read_once_tmp((size_t*)i);
-            // WRITE_ONCE(*(size_t*)i, 0);
+            WRITE_ONCE(*(size_t*)i, 0);
         // memset(g_pal_sec.heap_min, 0, (uint8_t*)g_pal_sec.heap_max - (uint8_t*)g_pal_sec.heap_min);
     }
 
