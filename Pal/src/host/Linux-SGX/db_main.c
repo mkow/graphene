@@ -519,6 +519,10 @@ static int parse_host_topo_info(struct pal_sec* sec_info) {
 extern void* g_enclave_base;
 extern void* g_enclave_top;
 
+static inline size_t read_once_tmp(volatile size_t* x) {
+    return *x;
+}
+
 /* Graphene uses GCC's stack protector that looks for a canary at gs:[0x8], but this function starts
  * with a default canary and then updates it to a random one, so we disable stack protector here */
 __attribute__((__optimize__("-fno-stack-protector")))
@@ -712,7 +716,10 @@ noreturn void pal_linux_main(char* uptr_libpal_uri, size_t libpal_uri_len, char*
         // for (uint8_t* i = g_pal_sec.heap_min; i < (uint8_t*)g_pal_sec.heap_max; i += g_page_size)
         //     READ_ONCE(*i);
             // WRITE_ONCE(*i, 0);
-        memset(g_pal_sec.heap_min, 0, (uint8_t*)g_pal_sec.heap_max - (uint8_t*)g_pal_sec.heap_min);
+        for (uint8_t* i = g_pal_sec.heap_min; i < (uint8_t*)g_pal_sec.heap_max; i += g_page_size)
+            read_once_tmp((size_t*)i);
+            // WRITE_ONCE(*(size_t*)i, 0);
+        // memset(g_pal_sec.heap_min, 0, (uint8_t*)g_pal_sec.heap_max - (uint8_t*)g_pal_sec.heap_min);
     }
 
     ret = toml_sizestring_in(g_pal_state.manifest_root, "loader.pal_internal_mem_size",
