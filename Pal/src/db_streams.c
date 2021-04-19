@@ -228,6 +228,7 @@ int64_t _DkStreamRead(PAL_HANDLE handle, uint64_t offset, uint64_t count, void* 
         if (!ops->readbyaddr)
             return -PAL_ERROR_NOTSUPPORT;
 
+    log_debug("%s (" __FILE__ ":%d)\n", __func__, __LINE__);
         ret = ops->readbyaddr(handle, offset, count, buf, addr, addrlen);
     } else {
         if (!ops->read)

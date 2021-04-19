@@ -381,8 +381,9 @@ static int64_t pipe_read(PAL_HANDLE handle, uint64_t offset, uint64_t len, void*
     if (IS_HANDLE_TYPE(handle, pipeprv)) {
         /* pipeprv are currently not encrypted, see pipe_private() */
         bytes = ocall_recv(handle->pipeprv.fds[0], buffer, len, NULL, NULL, NULL, NULL);
-        if (bytes < 0)
+        if (bytes < 0) {
             return unix_to_pal_error(bytes);
+        }
     } else {
         /* normal pipe, use a secure session (should be already initialized) */
         while (!__atomic_load_n(&handle->pipe.handshake_done, __ATOMIC_ACQUIRE))
@@ -392,6 +393,7 @@ static int64_t pipe_read(PAL_HANDLE handle, uint64_t offset, uint64_t len, void*
             return -PAL_ERROR_NOTCONNECTION;
 
         bytes = _DkStreamSecureRead(handle->pipe.ssl_ctx, buffer, len);
+        log_debug("%s (" __FILE__ ":%d), bytes=%d\n", __func__, __LINE__, (int)bytes);
     }
 
     return bytes;

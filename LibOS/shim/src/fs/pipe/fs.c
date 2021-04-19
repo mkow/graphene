@@ -29,6 +29,16 @@ static ssize_t pipe_read(struct shim_handle* hdl, void* buf, size_t count) {
     if (!hdl->info.pipe.ready_for_ops)
         return -EACCES;
 
+    log_debug("ASDF: %p 0x%lx\n", buf, count);
+    if (buf == (void*)0x6a757000 && count == 0x30000) {
+        DEBUG_HERE();
+        static int entry = 0;
+        if (entry == 1) {
+            volatile bool x = true;
+            while (x);
+        }
+        entry++;
+    }
     int ret = DkStreamRead(hdl->pal_handle, 0, &count, buf, NULL, 0);
     if (ret < 0) {
         return pal_to_unix_errno(ret);

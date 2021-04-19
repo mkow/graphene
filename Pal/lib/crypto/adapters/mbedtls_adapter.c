@@ -410,6 +410,11 @@ int lib_SSLHandshake(LIB_SSL_CONTEXT* ssl_ctx) {
 
 int lib_SSLRead(LIB_SSL_CONTEXT* ssl_ctx, uint8_t* buf, size_t buf_size) {
     int ret = mbedtls_ssl_read(&ssl_ctx->ssl, buf, buf_size);
+    pal_printf("%s (" __FILE__ ":%d), mbedtls ret=%d\n", __func__, __LINE__, ret);
+    // if (ret == -0x7180) {
+    //     volatile bool x = true;
+    //     while (x);
+    // }
     if (ret < 0)
         return mbedtls_to_pal_error(ret);
     return ret;
