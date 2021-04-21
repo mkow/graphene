@@ -356,7 +356,7 @@ static int pipe_open(PAL_HANDLE* handle, const char* type, const char* uri, int 
 
     if (!strcmp(type, URI_TYPE_PIPE)) {
         int res = pipe_connect(handle, uri, options);
-        log_debug("%s (" __FILE__ ":%d), name=%s\n", __func__, __LINE__, handle->pipe.name.str);
+        log_debug("%s (" __FILE__ ":%d), name=%s\n", __func__, __LINE__, (*handle)->pipe.name.str);
         return res;
     }
 
