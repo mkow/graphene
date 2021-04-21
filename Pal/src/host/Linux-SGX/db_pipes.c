@@ -354,8 +354,11 @@ static int pipe_open(PAL_HANDLE* handle, const char* type, const char* uri, int 
     if (!strcmp(type, URI_TYPE_PIPE_SRV))
         return pipe_listen(handle, uri, options);
 
-    if (!strcmp(type, URI_TYPE_PIPE))
-        return pipe_connect(handle, uri, options);
+    if (!strcmp(type, URI_TYPE_PIPE)) {
+        int res = pipe_connect(handle, uri, options);
+        log_debug("%s (" __FILE__ ":%d), name=%s\n", __func__, __LINE__, handle->pipe.name.str);
+        return res;
+    }
 
     return -PAL_ERROR_INVAL;
 }
@@ -432,6 +435,8 @@ static int64_t pipe_write(PAL_HANDLE handle, uint64_t offset, uint64_t len, cons
             return -PAL_ERROR_NOTCONNECTION;
 
         bytes = _DkStreamSecureWrite(handle->pipe.ssl_ctx, buffer, len);
+        log_debug("%s (" __FILE__ ":%d), bytes=%d, name=%s\n", __func__, __LINE__, (int)bytes,
+                  handle->pipe.name.str);
     }
 
     return bytes;
