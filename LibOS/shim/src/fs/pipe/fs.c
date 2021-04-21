@@ -29,7 +29,7 @@ static ssize_t pipe_read(struct shim_handle* hdl, void* buf, size_t count) {
     if (!hdl->info.pipe.ready_for_ops)
         return -EACCES;
 
-    log_debug("ASDF: %p 0x%lx\n", buf, count);
+    // log_debug("ASDF: %p 0x%lx\n", buf, count);
     if (buf == (void*)0x6a757000 && count == 0x30000) {
         DEBUG_HERE();
         // static int entry = 0;

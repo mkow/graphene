@@ -393,7 +393,8 @@ static int64_t pipe_read(PAL_HANDLE handle, uint64_t offset, uint64_t len, void*
             return -PAL_ERROR_NOTCONNECTION;
 
         bytes = _DkStreamSecureRead(handle->pipe.ssl_ctx, buffer, len);
-        log_debug("%s (" __FILE__ ":%d), bytes=%d\n", __func__, __LINE__, (int)bytes);
+        log_debug("%s (" __FILE__ ":%d), bytes=%d, name=%s\n", __func__, __LINE__, (int)bytes,
+                  handle->pipe.name);
     }
 
     return bytes;
