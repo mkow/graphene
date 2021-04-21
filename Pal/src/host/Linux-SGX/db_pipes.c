@@ -462,6 +462,8 @@ static int pipe_close(PAL_HANDLE handle) {
         while (!__atomic_load_n(&handle->pipe.handshake_done, __ATOMIC_ACQUIRE))
             CPU_RELAX();
 
+        log_debug("%s (" __FILE__ ":%d), name=%s\n", __func__, __LINE__, handle->pipe.name.str);
+
         if (handle->pipe.ssl_ctx) {
             _DkStreamSecureFree((LIB_SSL_CONTEXT*)handle->pipe.ssl_ctx);
             handle->pipe.ssl_ctx = NULL;
