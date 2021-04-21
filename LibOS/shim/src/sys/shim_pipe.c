@@ -152,6 +152,8 @@ out:
         undo_set_fd_handle(vfd1);
         undo_set_fd_handle(vfd2);
     }
+    if (ret == 0)
+        log_trace("pipe2 returned %d and %d\n", vfd1, vfd2);
     if (hdl1)
         put_handle(hdl1);
     if (hdl2)
