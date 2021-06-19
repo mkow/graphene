@@ -45,7 +45,7 @@ static int file_open(PAL_HANDLE* handle, const char* type, const char* uri, int 
     char* path = (void*)hdl + HANDLE_SIZE(file);
     int ret;
     if ((ret = get_norm_path(uri, path, &uri_size)) < 0) {
-        log_error("Could not normalize path (%s): %s\n", uri, pal_strerror(ret));
+        log_warning("Could not normalize path (%s): %s\n", uri, pal_strerror(ret));
         free(hdl);
         return ret;
     }

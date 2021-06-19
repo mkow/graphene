@@ -232,7 +232,7 @@ void _DkExceptionHandler(unsigned int exit_info, sgx_cpu_context_t* uc,
             log_error("(untrusted PAL sent PAL event 0x%x)\n", ei.intval);
         }
 
-        log_error("rax: 0x%08lx rcx: 0x%08lx rdx: 0x%08lx rbx: 0x%08lx\n"
+        log_debug("rax: 0x%08lx rcx: 0x%08lx rdx: 0x%08lx rbx: 0x%08lx\n"
                   "rsp: 0x%08lx rbp: 0x%08lx rsi: 0x%08lx rdi: 0x%08lx\n"
                   "r8 : 0x%08lx r9 : 0x%08lx r10: 0x%08lx r11: 0x%08lx\n"
                   "r12: 0x%08lx r13: 0x%08lx r14: 0x%08lx r15: 0x%08lx\n"
