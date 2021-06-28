@@ -25,7 +25,6 @@
 #include "sgx_log.h"
 #include "sgx_tls.h"
 #include "spinlock.h"
-#include "string.h"
 
 // FIXME: this is glibc realpath, declared here because the headers will conflict with PAL
 char* realpath(const char* path, char* resolved_path);
