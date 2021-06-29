@@ -1284,7 +1284,7 @@ BEGIN_RS_FUNC(vma) {
     void* need_mapped = (void*)GET_CP_ENTRY(ADDR);
     CP_REBASE(vma->file);
 
-    DEBUG_RS("vma: %p-%p flags 0x%x prot 0x%08x comment \"%s\"\n", vma->addr,
+    DEBUG_RS("vma: %p-%p flags 0x%x prot 0x%08x comment \"%s\"", vma->addr,
              vma->addr + vma->length, vma->flags, vma->prot, vma->comment);
 
     int ret = bkeep_mmap_fixed(vma->addr, vma->length, vma->prot, vma->flags | MAP_FIXED, vma->file,

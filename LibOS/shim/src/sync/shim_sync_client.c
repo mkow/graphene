@@ -64,7 +64,7 @@ static uint64_t sync_new_id(void) {
     lock_client();
     uint64_t id = ((uint64_t)pid << 32) + g_client_counter++;
     if (g_client_counter == 0)
-        FATAL("g_client_counter wrapped around\n");
+        FATAL("g_client_counter wrapped around");
     unlock_client();
     return id;
 }
@@ -77,7 +77,7 @@ static void sync_wait_without_lock(struct sync_handle* handle) {
     handle->n_waiters++;
     unlock(&handle->prop_lock);
     if (object_wait_with_retry(handle->event) < 0)
-        FATAL("waiting for event\n");
+        FATAL("waiting for event");
     lock(&handle->prop_lock);
     if (--handle->n_waiters == 0)
         DkEventClear(handle->event);
@@ -104,7 +104,7 @@ static void sync_downgrade(struct sync_handle* handle) {
     }
     if (ipc_sync_client_send(IPC_MSG_SYNC_CONFIRM_DOWNGRADE, handle->id, handle->server_req_state,
                              data_size, handle->data) < 0)
-        FATAL("sending CONFIRM_DOWNGRADE\n");
+        FATAL("sending CONFIRM_DOWNGRADE");
     handle->cur_state = handle->server_req_state;
     handle->server_req_state = SYNC_STATE_NONE;
 }
@@ -117,7 +117,7 @@ static void update_handle_data(struct sync_handle* handle, size_t data_size, voi
         free(handle->data);
         handle->data_size = data_size;
         if (!(handle->data = malloc(handle->data_size)))
-            FATAL("Cannot allocate data for handle\n");
+            FATAL("Cannot allocate data for handle");
     }
     memcpy(handle->data, data, data_size);
 }
@@ -242,7 +242,7 @@ void sync_destroy(struct sync_handle* handle) {
 
     if (g_sync_enabled && handle->phase == SYNC_PHASE_OPEN) {
         if (send_request_close(handle) < 0)
-            FATAL("sending REQUEST_CLOSE\n");
+            FATAL("sending REQUEST_CLOSE");
         handle->phase = SYNC_PHASE_CLOSING;
         handle->cur_state = SYNC_STATE_INVALID;
         do {
@@ -277,12 +277,12 @@ bool sync_lock(struct sync_handle* handle, int state, void* data, size_t data_si
     if (handle->cur_state < state) {
         do {
             if (handle->phase == SYNC_PHASE_CLOSING || handle->phase == SYNC_PHASE_CLOSED)
-                FATAL("sync_lock() on a closed handle\n");
+                FATAL("sync_lock() on a closed handle");
 
             if (handle->client_req_state < state) {
                 if (ipc_sync_client_send(IPC_MSG_SYNC_REQUEST_UPGRADE, handle->id, state,
                                          /*data_size=*/0, /*data=*/NULL) < 0)
-                    FATAL("sending REQUEST_UPGRADE\n");
+                    FATAL("sending REQUEST_UPGRADE");
                 handle->client_req_state = state;
                 handle->phase = SYNC_PHASE_OPEN;
             }
@@ -291,7 +291,7 @@ bool sync_lock(struct sync_handle* handle, int state, void* data, size_t data_si
 
         if (data_size > 0 && handle->data_size > 0) {
             if (data_size != handle->data_size)
-                FATAL("handle data size mismatch\n");
+                FATAL("handle data size mismatch");
 
             memcpy(data, handle->data, data_size);
             updated = true;
@@ -334,7 +334,7 @@ int shutdown_sync_client(void) {
         lock(&handle->prop_lock);
         if (g_sync_enabled && handle->phase == SYNC_PHASE_OPEN) {
             if (send_request_close(handle) < 0)
-                FATAL("sending REQUEST_CLOSE\n");
+                FATAL("sending REQUEST_CLOSE");
             handle->phase = SYNC_PHASE_CLOSING;
             handle->cur_state = SYNC_STATE_INVALID;
         }
@@ -367,7 +367,7 @@ static struct sync_handle* find_handle(uint64_t id) {
     HASH_FIND(hh, g_client_handles, &id, sizeof(id), handle);
 
     if (!handle)
-        FATAL("message for unknown handle\n");
+        FATAL("message for unknown handle");
 
     get_sync_handle(handle);
     unlock_client();
@@ -435,7 +435,7 @@ void sync_client_message_callback(int code, uint64_t id, int state, size_t data_
             do_confirm_close(id);
             break;
         default:
-            FATAL("unknown message: %d\n", code);
+            FATAL("unknown message: %d", code);
     }
 }
 

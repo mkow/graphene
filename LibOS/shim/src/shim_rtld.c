@@ -569,7 +569,7 @@ static int __check_elf_header(ElfW(Ehdr)* ehdr) {
 
     /* check if the type of ELF header is either DYN or EXEC */
     if (ehdr->e_type != ET_DYN && ehdr->e_type != ET_EXEC) {
-        errstring = "only ET_DYN and ET_EXEC can be loaded\n";
+        errstring = "only ET_DYN and ET_EXEC can be loaded";
         goto verify_failed;
     }
 
